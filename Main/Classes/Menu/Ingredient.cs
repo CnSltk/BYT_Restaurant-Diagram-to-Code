@@ -1,5 +1,12 @@
 ﻿namespace Main.Classes.Menu;
 
+public enum Unit
+{
+    Gram,
+    Ml,
+    Pcs
+}
+
 [Serializable]
 public class Ingredient
 {
@@ -16,24 +23,13 @@ public class Ingredient
             _name = value.Trim();
         }
     }
-    private string _unit;
-
-    public string Unit
-    {
-        get => _unit;
-        set
-        {
-            if(string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("Unit can't be empty");
-            _unit = value.Trim();
-        }
-    }
+    public Unit Unit { get; private set; }
 
     public List<string> Allergens { get; } = new List<string>();
-    public int TimeUsed { get; private set; }
+    public int TimeUsed { get; set; }
     private static List<Ingredient> _extent = new List<Ingredient>();
     
-    public Ingredient(int ingredientId, string name, string unit,IEnumerable<string> allergens = null)
+    public Ingredient(int ingredientId, string name,Unit unit,IEnumerable<string> allergens = null)
         {
         if (ingredientId <= 0)
             throw new ArgumentException("Ingredient id can't be zero or negative");
