@@ -16,7 +16,6 @@ public class Ingredient
             _name = value.Trim();
         }
     }
-
     private string _unit;
 
     public string Unit
