@@ -51,11 +51,17 @@ public class Customer
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
 
-    public Customer(string name, string surname)
+    public Customer(int customerId, string name, string surname,  string? phoneNumber, string? email)
     {
-        _name = name;
-        _surname = surname;
+        if (customerId < 1)
+            throw new ArgumentException("CustomerId cannot be less than 1.");
+        CustomerId = customerId;
+        Name = name;
+        Surname = surname;
+        PhoneNumber = phoneNumber;
+        Email = email;
     }
+
     public static void Save(string path = "customers.json")
     {
         try

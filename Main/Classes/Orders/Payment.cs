@@ -51,12 +51,14 @@ public class Payment
         }
     }
 
-    public Payment(decimal amount, DateTime paymenTime, PaymentMethod method, PaymentStatus status)
+    public Payment(decimal amount, DateTime paymenTime, int paymentId, PaymentMethod method, PaymentStatus status, DateTime? paidAt)
     {
-        _amount = amount;
-        _paymenTime = paymenTime;
+        Amount = amount;
+        PaymentTime = paymenTime;
+        PaymentID = paymentId;
         Method = method;
         Status = status;
+        PaidAt = paidAt;
     }
 
     public void Pay()
