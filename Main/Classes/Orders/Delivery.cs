@@ -24,12 +24,17 @@ public class Delivery
     public Decimal? Fee { get; set; }
     public DeliveryStatus Status { get; set; }
 
-    public Delivery(DeliveryMethod method, Adress adress, DeliveryStatus status)
+    public Delivery(int deliveryId, DeliveryMethod method, Adress adress, DateTime? scheduledAt, DateTime? deliveredAt, decimal? fee, DeliveryStatus status)
     {
+        DeliveryID = deliveryId;
         Method = method;
         Adress = adress;
+        ScheduledAt = scheduledAt;
+        DeliveredAt = deliveredAt;
+        Fee = fee;
         Status = status;
     }
+
     public static void Save(string path = "delivery.json")
     {
         try

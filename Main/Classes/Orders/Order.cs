@@ -40,7 +40,7 @@ public class Order
 
     public Order(DateTime orderTime, bool ısTakeAway, OrderStatus status)
     {
-        _orderTime = orderTime;
+        OrderTime = orderTime;
         IsTakeAway = ısTakeAway;
         Status = status;
     }
