@@ -18,6 +18,17 @@ public class Table
             _number = value;
         }
     }
+    private bool _isOccupied = false;
+
+    public bool IsOccupied
+    {
+        get => _isOccupied;
+        set
+        {
+            _isOccupied = value;
+        }
+    }
+
     private static List<Table> _extent = new List<Table>();
     public Table(int tableId, int number)
     {
