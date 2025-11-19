@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Main.Classes.Employees;
 
 namespace Menu;
 
@@ -27,22 +26,17 @@ public class Beverage : MenuItems
     }
 
     public BeverageCategory Category { get; set; }
-    
-    private static List<Beverage> _extent = new List<Beverage>();
-    
+
+    private static List<Beverage> _extent = new();
+    public static IReadOnlyList<Beverage> GetExtent() => _extent.AsReadOnly();
+    public static void ClearExtentForTests() => _extent.Clear();
+
     private static void AddToExtent(Beverage beverage)
     {
         if (beverage == null)
-            throw new ArgumentException("Beverage cannot be null.");
+            throw new ArgumentNullException(nameof(beverage));
         _extent.Add(beverage);
     }
-
-    public static IReadOnlyList<Beverage> GetExtent()
-    {
-        return _extent.AsReadOnly();
-    }
-    
-    
 
     public Beverage(
         string name,
@@ -55,18 +49,19 @@ public class Beverage : MenuItems
     {
         VolumeMl = volumeMl;
         Category = category;
+        AddToExtent(this);
     }
-    
+
     public static void Save(string path = "Beverage.json")
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(path, jsonString);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Failed to save Beverage.", ex);
+            throw new InvalidOperationException("Failed to save Beverage extent.", ex);
         }
     }
 
@@ -79,11 +74,13 @@ public class Beverage : MenuItems
                 _extent.Clear();
                 return false;
             }
-            string jsonString = File.ReadAllText(path);
-            _extent = JsonSerializer.Deserialize<List<Beverage>>(jsonString);
+
+            var jsonString = File.ReadAllText(path);
+            var loaded = JsonSerializer.Deserialize<List<Beverage>>(jsonString);
+            _extent = loaded ?? new List<Beverage>();
             return true;
         }
-        catch (Exception)
+        catch
         {
             _extent.Clear();
             return false;

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Menu;
 
 namespace Main.Classes.Menu;
 
@@ -13,68 +12,107 @@ public enum Unit
 [Serializable]
 public class Ingredient
 {
-    public int IngredientId { get; }
-    private string _name;
+    private string _name = string.Empty;
+    private int _timeUsed;
+
+    private static List<Ingredient> _extent = new();
 
     public string Name
     {
         get => _name;
         set
         {
-            if(string.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Ingredient name can't be empty");
-            _name = value.Trim();
+            var trimmed = value.Trim();
+            if (trimmed.Length < 2 || trimmed.Length > 50)
+                throw new ArgumentException("Ingredient name length must be between 2 and 50 characters");
+            _name = trimmed;
         }
     }
+
     public Unit Unit { get; private set; }
 
-    public List<string> Allergens { get; } = new List<string>();
-    public int TimeUsed { get; set; }
-    private static List<Ingredient> _extent = new List<Ingredient>();
-    
-    
-    
-    public Ingredient(int ingredientId, string name,Unit unit,IEnumerable<string> allergens = null)
+    private readonly List<string> _allergens = new();
+    public IReadOnlyList<string> Allergens => _allergens.AsReadOnly();
+
+    public int TimeUsed
+    {
+        get => _timeUsed;
+        set
         {
-        if (ingredientId <= 0)
-            throw new ArgumentException("Ingredient id can't be zero or negative");
-        IngredientId = ingredientId;
-        Name = name;
+            if (value < 0)
+                throw new ArgumentException("TimeUsed cannot be negative");
+            _timeUsed = value;
+        }
+    }
+
+    public Ingredient(string name, Unit unit, IEnumerable<string>? allergens = null)
+    {
+        _name = name;
         Unit = unit;
+
         if (allergens != null)
         {
             foreach (var a in allergens)
             {
-                if(!string.IsNullOrWhiteSpace(a))
-                    Allergens.Add(a.Trim());
+                if (!string.IsNullOrWhiteSpace(a))
+                    AddAllergen(a);
             }
         }
 
         AddToExtent(this);
-        }
+    }
+
+    public void AddAllergen(string allergen)
+    {
+        if (string.IsNullOrWhiteSpace(allergen))
+            throw new ArgumentException("Allergen cannot be empty");
+
+        var trimmed = allergen.Trim();
+        if (trimmed.Length > 50)
+            throw new ArgumentException("Allergen name is too long");
+        if (_allergens.Contains(trimmed))
+            throw new ArgumentException("Allergen already exists");
+        if (_allergens.Count >= 10)
+            throw new ArgumentException("Too many allergens");
+
+        _allergens.Add(trimmed);
+    }
+
+    public void RemoveAllergen(string allergen)
+    {
+        _allergens.Remove(allergen);
+    }
+
+    public void UseIngredient()
+    {
+        if (TimeUsed == int.MaxValue)
+            throw new InvalidOperationException("TimeUsed reached maximum value");
+        TimeUsed++;
+    }
 
     private static void AddToExtent(Ingredient ingredient)
     {
-        if(ingredient == null)
+        if (ingredient == null)
             throw new ArgumentNullException(nameof(ingredient));
         _extent.Add(ingredient);
     }
-    public static IReadOnlyList<Ingredient> GetExtent()
-        => _extent.AsReadOnly();
-    public static void ClearExtentForTests()
-        => _extent.Clear();
-    
-    
+
+    public static IReadOnlyList<Ingredient> GetExtent() => _extent.AsReadOnly();
+
+    public static void ClearExtentForTests() => _extent.Clear();
+
     public static void Save(string path = "Ingredient.json")
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(path, jsonString);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Failed to save Ingredient.", ex);
+            throw new InvalidOperationException("Failed to save Ingredient extent.", ex);
         }
     }
 
@@ -87,19 +125,16 @@ public class Ingredient
                 _extent.Clear();
                 return false;
             }
-            string jsonString = File.ReadAllText(path);
-            _extent = JsonSerializer.Deserialize<List<Ingredient>>(jsonString);
+
+            var jsonString = File.ReadAllText(path);
+            var loaded = JsonSerializer.Deserialize<List<Ingredient>>(jsonString);
+            _extent = loaded ?? new List<Ingredient>();
             return true;
         }
-        catch (Exception)
+        catch
         {
             _extent.Clear();
             return false;
         }
-    }
-
-    public void UseIngredient()
-    {
-        TimeUsed++;
     }
 }

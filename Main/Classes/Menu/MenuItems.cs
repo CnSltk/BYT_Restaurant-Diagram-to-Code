@@ -1,14 +1,24 @@
+using System.Xml.Serialization;
+
 namespace Menu;
 
 [Serializable]
+[XmlInclude(typeof(Food))]
+[XmlInclude(typeof(Beverage))]
 public abstract class MenuItems
 {
+    private static List<MenuItems> _extent = new();
+    public static IReadOnlyList<MenuItems> Extent => _extent.AsReadOnly();
+
     public Guid ItemId { get; }
-    private string _name;
+
+    private string _name = string.Empty;
     private decimal _price;
     private bool _isAvailable;
     private string? _description;
 
+    private List<string> _allergens = new();
+    public IReadOnlyList<string> Allergens => _allergens.AsReadOnly();
 
     public string Name
     {
@@ -17,6 +27,8 @@ public abstract class MenuItems
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Name cannot be empty");
+            if (value.Length < 2 || value.Length > 50)
+                throw new ArgumentException("Name length must be between 2 and 50 characters");
             _name = value.Trim();
         }
     }
@@ -26,8 +38,8 @@ public abstract class MenuItems
         get => _price;
         set
         {
-            if (value < 0)
-                throw new ArgumentException("Price cannot be negative");
+            if (value < 0m || value > 1000m)
+                throw new ArgumentException("Price must be between 0 and 1000");
             _price = Math.Round(value, 2);
         }
     }
@@ -43,39 +55,59 @@ public abstract class MenuItems
         get => _description;
         set
         {
-            if (value is not null && string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("Description cannot be blank");
-            _description = value;
+            if (value is not null)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Description cannot be blank");
+                if (value.Length > 200)
+                    throw new ArgumentException("Description is too long");
+                _description = value.Trim();
+            }
+            else
+            {
+                _description = null;
+            }
         }
     }
 
-    private List<string> _allergens = new();
-    public IReadOnlyList<string> Allergens => _allergens.AsReadOnly();
+    protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
+    {
+        ItemId = Guid.NewGuid();
+        _name = name;
+        _price = price;
+        _isAvailable = isAvailable;
+        _description = description;
+    }
 
     public void AddAllergen(string allergen)
     {
         if (string.IsNullOrWhiteSpace(allergen))
             throw new ArgumentException("Allergen cannot be empty");
-        if (!_allergens.Contains(allergen.Trim()))
-            _allergens.Add(allergen.Trim());
+        allergen = allergen.Trim();
+        if (allergen.Length > 50)
+            throw new ArgumentException("Allergen name is too long");
+        if (_allergens.Contains(allergen))
+            throw new ArgumentException("Allergen already exists");
+        if (_allergens.Count >= 10)
+            throw new ArgumentException("Too many allergens");
+        _allergens.Add(allergen);
     }
 
-    public void RemoveAllergen(string allergen) => _allergens.Remove(allergen);
-
-    protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
+    public void RemoveAllergen(string allergen)
     {
-        ItemId = Guid.NewGuid();
-        Name = name;
-        Price = price;
-        IsAvailable = isAvailable;
-        Description = description;
+        _allergens.Remove(allergen);
     }
-    
 
-    public static void CreateMenuItem(MenuItems item)
+    private static void AddToExtent(MenuItems item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
+        _extent.Add(item);
+    }
+
+    public static void CreateMenuItem(MenuItems item)
+    {
+        AddToExtent(item);
     }
 
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,
@@ -86,4 +118,27 @@ public abstract class MenuItems
         if (isAvailable is not null) IsAvailable = isAvailable.Value;
         if (description is not null) Description = description;
     }
+
+    public static void SaveExtent(string path)
+    {
+        using var fs = File.Create(path);
+        var serializer = new XmlSerializer(typeof(List<MenuItems>));
+        serializer.Serialize(fs, _extent);
+    }
+
+    public static void LoadExtent(string path)
+    {
+        if (!File.Exists(path))
+        {
+            _extent = new List<MenuItems>();
+            return;
+        }
+
+        using var fs = File.OpenRead(path);
+        var serializer = new XmlSerializer(typeof(List<MenuItems>));
+        var loaded = serializer.Deserialize(fs) as List<MenuItems>;
+        _extent = loaded ?? new List<MenuItems>();
+    }
+
+    public static void ClearExtent() => _extent.Clear();
 }

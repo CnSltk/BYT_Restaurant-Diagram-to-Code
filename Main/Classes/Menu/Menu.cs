@@ -5,12 +5,10 @@ namespace Menu;
 [Serializable]
 public class Menu
 {
-    private string _name;
-    public Guid MenuId { get; }
-    public string Version { get; set; }
-    public bool IsActive { get; set; }
+    private string _name = string.Empty;
+    private string _version = string.Empty;
 
-    private static List<Menu> _extent = new List<Menu>();
+    public Guid MenuId { get; }
 
     public string Name
     {
@@ -19,15 +17,36 @@ public class Menu
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Menu name cannot be empty");
-            _name = value.Trim();
+            var trimmed = value.Trim();
+            if (trimmed.Length < 2 || trimmed.Length > 50)
+                throw new ArgumentException("Menu name length must be between 2 and 50 characters");
+            _name = trimmed;
         }
     }
+
+    public string Version
+    {
+        get => _version;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException("Version cannot be empty");
+            var trimmed = value.Trim();
+            if (trimmed.Length > 20)
+                throw new ArgumentException("Version is too long");
+            _version = trimmed;
+        }
+    }
+
+    public bool IsActive { get; set; }
+
+    private static List<Menu> _extent = new();
 
     public Menu(string name, string version, bool isActive)
     {
         MenuId = Guid.NewGuid();
-        Name = name;
-        Version = version;
+        _name = name ?? string.Empty;
+        _version = version ?? string.Empty;
         IsActive = isActive;
         AddToExtent(this);
     }
@@ -42,18 +61,17 @@ public class Menu
     public static IReadOnlyList<Menu> GetExtent() => _extent.AsReadOnly();
 
     public static void ClearExtentForTest() => _extent.Clear();
-    
-    
+
     public static void Save(string path = "Menu.json")
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(path, jsonString);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Failed to save Menu.", ex);
+            throw new InvalidOperationException("Failed to save Menu extent.", ex);
         }
     }
 
@@ -66,11 +84,13 @@ public class Menu
                 _extent.Clear();
                 return false;
             }
-            string jsonString = File.ReadAllText(path);
-            _extent = JsonSerializer.Deserialize<List<Menu>>(jsonString);
+
+            var jsonString = File.ReadAllText(path);
+            var loaded = JsonSerializer.Deserialize<List<Menu>>(jsonString);
+            _extent = loaded ?? new List<Menu>();
             return true;
         }
-        catch (Exception)
+        catch
         {
             _extent.Clear();
             return false;

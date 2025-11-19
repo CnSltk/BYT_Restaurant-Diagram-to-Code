@@ -24,7 +24,9 @@ public class Food : MenuItems
         set
         {
             if (value <= 0)
-                throw new ArgumentException("Calories cannot be negative or zero");
+                throw new ArgumentException("Calories must be greater than zero");
+            if (value > 5000)
+                throw new ArgumentException("Calories value is too high");
             _calories = value;
         }
     }
@@ -36,36 +38,37 @@ public class Food : MenuItems
         {
             if (value < 0)
                 throw new ArgumentException("Preparation time cannot be negative");
+            if (value > 240)
+                throw new ArgumentException("Preparation time is too long");
             _prepTimeMin = value;
         }
     }
 
     public FoodCategory Category { get; set; }
-    
-    private static List<Food> _extent = new List<Food>();
-    
+
+    private static List<Food> _extent = new();
+
     private static void AddToExtent(Food food)
     {
         if (food == null)
-            throw new ArgumentException("Food cannot be null.");
+            throw new ArgumentNullException(nameof(food));
         _extent.Add(food);
     }
 
-    public static IReadOnlyList<Food> GetExtent()
-    {
-        return _extent.AsReadOnly();
-    }
-    
+    public static IReadOnlyList<Food> GetExtent() => _extent.AsReadOnly();
+
+    public static void ClearExtentForTests() => _extent.Clear();
+
     public static void Save(string path = "Food.json")
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            var jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(path, jsonString);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Failed to save Food.", ex);
+            throw new InvalidOperationException("Failed to save Food extent.", ex);
         }
     }
 
@@ -78,11 +81,13 @@ public class Food : MenuItems
                 _extent.Clear();
                 return false;
             }
-            string jsonString = File.ReadAllText(path);
-            _extent = JsonSerializer.Deserialize<List<Food>>(jsonString);
+
+            var jsonString = File.ReadAllText(path);
+            var loaded = JsonSerializer.Deserialize<List<Food>>(jsonString);
+            _extent = loaded ?? new List<Food>();
             return true;
         }
-        catch (Exception)
+        catch
         {
             _extent.Clear();
             return false;
@@ -106,5 +111,6 @@ public class Food : MenuItems
         Calories = calories;
         PrepTimeMin = prepTimeMin;
         Category = category;
+        AddToExtent(this);
     }
 }
