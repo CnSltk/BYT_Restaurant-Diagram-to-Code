@@ -4,9 +4,7 @@ using Main.Classes.Orders;
 
 namespace RestaurantTests;
 
-/* -------------------------------------------------------------
-   MENU ITEM TESTS
---------------------------------------------------------------*/
+
 [TestFixture]
 public class MenuItemTests
 {
@@ -64,9 +62,7 @@ public class MenuItemTests
 
 
 
-/* -------------------------------------------------------------
-   PART-TIME EMPLOYEE TESTS
---------------------------------------------------------------*/
+
 [TestFixture]
 public class EmployeePartTimeTests
 {
@@ -108,9 +104,7 @@ public class EmployeePartTimeTests
 
 
 
-/* -------------------------------------------------------------
-   FULL-TIME EMPLOYEE TESTS
---------------------------------------------------------------*/
+
 [TestFixture]
 public class EmployeeFullTimeTests
 {
@@ -131,9 +125,7 @@ public class EmployeeFullTimeTests
 
 
 
-/* -------------------------------------------------------------
-   STAFF BASE CLASS TESTS
---------------------------------------------------------------*/
+
 [TestFixture]
 public class EmployeeStaffTests
 {
@@ -182,40 +174,201 @@ public class EmployeeStaffTests
 
 
 
-/* -------------------------------------------------------------
-   CUSTOMER CLASS TESTS
---------------------------------------------------------------*/
+
 [TestFixture]
 public class CustomerTests
 {
     [Test]
-    public void Constructor_ValidValues_AssignedCorrectly()
+    public void CustomerID_MustBeGreaterThanZero()
     {
-        var c = new Customer(1, "Ibrahim", "Yesil", "453043988", "s30066@pjwstk.edu.pl");
-
-        Assert.That(c.Name, Is.EqualTo("Ibrahim"));
-        Assert.That(c.Surname, Is.EqualTo("Yesil"));
-        Assert.That(c.PhoneNumber, Is.EqualTo("453043988"));
-        Assert.That(c.Email, Is.EqualTo("s30066@pjwstk.edu.pl"));
+        Assert.Throws<ArgumentException>(() =>
+            new Customer(
+                0,
+                "Ibrahim",
+                "Yesil",
+                "453043988",
+                "s30066@pjwstk.edu.pl"
+            ));
     }
 
     [Test]
-    public void Constructor_InvalidId_Throws()
+    public void PhoneNumber_MustContainDigitsOnly()
     {
-        var ex = Assert.Throws<ArgumentException>(() =>
-            new Customer(-3, "Ibrahim", "Yesil", null, null)
-        );
-
-        Assert.That(ex.Message, Is.EqualTo("CustomerId cannot be less than 1."));
+        Assert.Throws<ArgumentException>(() =>
+            new Customer(
+                1,
+                "Ibrahim",
+                "Yesil",
+                "45A03988",
+                "s30066@pjwstk.edu.pl"
+            ));
     }
 
     [Test]
-    public void Constructor_EmptySurname_Throws()
+    public void Email_MustContain_At_And_Dot()
     {
-        var ex = Assert.Throws<ArgumentException>(() =>
-            new Customer(2, "Ibrahim", "", null, null)
-        );
-
-        Assert.That(ex.Message, Is.EqualTo("Surname cannot be empty"));
+        Assert.Throws<ArgumentException>(() =>
+            new Customer(
+                1,
+                "Ibrahim",
+                "Yesil",
+                "453043988",
+                "invalidEmail" 
+            ));
     }
 }
+
+
+[TestFixture]
+public class DeliveryTests
+{
+    private Adress ValidAdress => new Adress
+    {
+        City = "Warsaw",
+        StreetName = "Main Street",
+        ZipCode = "00-001"
+    };
+
+    [Test]
+    public void DeliveryID_MustBe_GreaterThanZero()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Delivery(
+                -1,
+                DeliveryMethod.Courier,
+                ValidAdress,
+                DateTime.Now,
+                null,
+                10m,
+                DeliveryStatus.Scheduled
+            ));
+    }
+
+    [Test]
+    public void DeliveredAt_CannotBeEarlierThan_ScheduledAt()
+    {
+        var scheduled = DateTime.Now;
+        var delivered = scheduled.AddHours(-1); 
+
+        Assert.Throws<ArgumentException>(() =>
+            new Delivery(
+                1,
+                DeliveryMethod.Courier,
+                ValidAdress,
+                scheduled,
+                delivered,
+                10m,
+                DeliveryStatus.Scheduled
+            ));
+    }
+
+    [Test]
+    public void Address_CannotBeNull_OrIncomplete()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Delivery(
+                1,
+                DeliveryMethod.Courier,
+                new Adress { City = "", StreetName = "A", ZipCode = "123" },
+                DateTime.Now,
+                null,
+                5m,
+                DeliveryStatus.OnRoute
+            ));
+    }
+}
+
+
+[TestFixture]
+public class OrderTests
+{
+    [Test]
+    public void OrderTime_CannotBeInFuture()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Order(
+                DateTime.Now.AddHours(1), 
+                true,
+                OrderStatus.Preparing
+            ));
+    }
+
+    [Test]
+    public void Order_IsAddedToExtent_OnCreation()
+    {
+        var countBefore = Order.Extent.Count;
+
+        var o = new Order(
+            DateTime.Now.AddMinutes(-10),
+            false,
+            OrderStatus.Preparing
+        );
+
+        Assert.That(Order.Extent.Count, Is.EqualTo(countBefore + 1));
+        Assert.That(Order.Extent.Contains(o));
+    }
+
+    [Test]
+    public void OrderPrepDuration_IsCalculatedCorrectly()
+    {
+        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+
+        var o = new Order(tenMinutesAgo, false, OrderStatus.Prepared);
+
+        Assert.That(o.OrderPrepDuration.TotalMinutes,
+            Is.GreaterThanOrEqualTo(9).And.LessThanOrEqualTo(11));
+    }
+}
+
+
+
+[TestFixture]
+public class PaymentTests
+{
+    [Test]
+    public void PaymentID_MustBeGreaterThanZero()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Payment(
+                50m,
+                DateTime.Now,
+                0, 
+                PaymentMethod.Cash,
+                PaymentStatus.Pending,
+                null
+            ));
+    }
+
+    [Test]
+    public void PaymentTime_CannotBeInFuture()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Payment(
+                10m,
+                DateTime.Now.AddHours(2), 
+                1,
+                PaymentMethod.Card,
+                PaymentStatus.Pending,
+                null
+            ));
+    }
+
+    [Test]
+    public void PaidAt_CannotBeEarlierThan_PaymentTime()
+    {
+        var paymentTime = DateTime.Now.AddMinutes(-5);
+        var paidAt = paymentTime.AddMinutes(-10); 
+
+        Assert.Throws<ArgumentException>(() =>
+            new Payment(
+                20m,
+                paymentTime,
+                1,
+                PaymentMethod.Online,
+                PaymentStatus.Completed,
+                paidAt
+            ));
+    }
+}
+
+
