@@ -9,7 +9,6 @@ public abstract class MenuItems
     private bool _isAvailable;
     private string? _description;
 
-    private static List<MenuItems> _extent = new();
 
     public string Name
     {
@@ -70,25 +69,13 @@ public abstract class MenuItems
         Price = price;
         IsAvailable = isAvailable;
         Description = description;
-        AddToExtent(this);
     }
-
-    protected static void AddToExtent(MenuItems item)
-    {
-        if (item == null)
-            throw new ArgumentNullException(nameof(item));
-        _extent.Add(item);
-    }
-
-    public static IReadOnlyList<MenuItems> GetExtent() => _extent.AsReadOnly();
-
-    public static void ClearExtentForTest() => _extent.Clear();
+    
 
     public static void CreateMenuItem(MenuItems item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
-        AddToExtent(item);
     }
 
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,

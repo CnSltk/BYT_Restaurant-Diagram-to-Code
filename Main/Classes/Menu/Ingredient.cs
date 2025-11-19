@@ -1,4 +1,7 @@
-﻿namespace Main.Classes.Menu;
+﻿using System.Text.Json;
+using Menu;
+
+namespace Main.Classes.Menu;
 
 public enum Unit
 {
@@ -29,6 +32,8 @@ public class Ingredient
     public int TimeUsed { get; set; }
     private static List<Ingredient> _extent = new List<Ingredient>();
     
+    
+    
     public Ingredient(int ingredientId, string name,Unit unit,IEnumerable<string> allergens = null)
         {
         if (ingredientId <= 0)
@@ -58,6 +63,40 @@ public class Ingredient
         => _extent.AsReadOnly();
     public static void ClearExtentForTests()
         => _extent.Clear();
+    
+    
+    public static void Save(string path = "Ingredient.json")
+    {
+        try
+        {
+            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, jsonString);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to save Ingredient.", ex);
+        }
+    }
+
+    public static bool Load(string path = "Ingredient.json")
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                _extent.Clear();
+                return false;
+            }
+            string jsonString = File.ReadAllText(path);
+            _extent = JsonSerializer.Deserialize<List<Ingredient>>(jsonString);
+            return true;
+        }
+        catch (Exception)
+        {
+            _extent.Clear();
+            return false;
+        }
+    }
 
     public void UseIngredient()
     {

@@ -1,4 +1,7 @@
-﻿namespace Main.Classes.Restaurant;
+﻿using System.Text.Json;
+using Main.Classes.Employees;
+
+namespace Main.Classes.Restaurant;
 
 [Serializable]
 public class Table
@@ -36,4 +39,37 @@ public class Table
         => _extent.AsReadOnly();
     public static void ClearExtentForTests()
         => _extent.Clear();
+    
+    public static void Save(string path = "Table.json")
+    {
+        try
+        {
+            string jsonString = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, jsonString);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to save Table.", ex);
+        }
+    }
+
+    public static bool Load(string path = "Table.json")
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                _extent.Clear();
+                return false;
+            }
+            string jsonString = File.ReadAllText(path);
+            _extent = JsonSerializer.Deserialize<List<Table>>(jsonString);
+            return true;
+        }
+        catch (Exception)
+        {
+            _extent.Clear();
+            return false;
+        }
+    }
 }

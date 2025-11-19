@@ -1,4 +1,7 @@
-﻿namespace Main.Classes.Restaurant;
+﻿using System.Text.Json;
+using Main.Classes.Employees;
+
+namespace Main.Classes.Restaurant;
 
 [Serializable]
 public class Restaurant
@@ -28,7 +31,7 @@ public class Restaurant
             _openingHour = value.Trim();
         }
     }
-    private static List<Restaurant> _extent = new List<Restaurant>();
+    private static List<Restaurant> _Restaurantextent = new List<Restaurant>();
     public Restaurant (int restaurantId, string name,string openingHours)
     {
         if (restaurantId <= 0) 
@@ -44,9 +47,42 @@ public class Restaurant
     {
         if (restaurant == null)
             throw new ArgumentNullException(nameof(restaurant));
-        _extent.Add(restaurant);
+        _Restaurantextent.Add(restaurant);
     }
-    public static IReadOnlyList<Restaurant> GetExtent() => _extent.AsReadOnly();
-    public static void ClearExtentForTest() => _extent.Clear();
+    public static IReadOnlyList<Restaurant> GetExtent() => _Restaurantextent.AsReadOnly();
+    public static void ClearExtentForTest() => _Restaurantextent.Clear();
+    
+    public static void Save(string path = "Restaurant.json")
+    {
+        try
+        {
+            string jsonString = JsonSerializer.Serialize(_Restaurantextent, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, jsonString);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to save PartTime.", ex);
+        }
+    }
+
+    public static bool Load(string path = "partTimes.json")
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                _Restaurantextent.Clear();
+                return false;
+            }
+            string jsonString = File.ReadAllText(path);
+            _Restaurantextent = JsonSerializer.Deserialize<List<Restaurant>>(jsonString);
+            return true;
+        }
+        catch (Exception)
+        {
+            _Restaurantextent.Clear();
+            return false;
+        }
+    }
 
 }
