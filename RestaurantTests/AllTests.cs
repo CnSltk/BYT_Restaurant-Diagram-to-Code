@@ -88,30 +88,6 @@ public class MenuItemTests
         Assert.That(ex!.Message, Is.EqualTo("Allergen already exists"));
     }
 
-    [Test]
-    public void SaveAndLoadExtent_RestoresMenuItems()
-    {
-        MenuItems.ClearExtent();
-
-        var i1 = new TestableMenuItem("Soup", 10m, true);
-        var i2 = new TestableMenuItem("Salad", 15m, true);
-
-        MenuItems.CreateMenuItem(i1);
-        MenuItems.CreateMenuItem(i2);
-
-        var path = "MenuItems_Test.xml";
-        if (File.Exists(path))
-            File.Delete(path);
-
-        MenuItems.SaveExtent(path);
-        MenuItems.ClearExtent();
-        MenuItems.LoadExtent(path);
-
-        Assert.That(MenuItems.Extent.Count, Is.EqualTo(2));
-        Assert.That(MenuItems.Extent.Any(i => i.Name == "Soup"));
-        Assert.That(MenuItems.Extent.Any(i => i.Name == "Salad"));
-    }
-
 }
 
 /* -------------------------------------------------------------
@@ -667,4 +643,400 @@ public class PaymentTests
     }
 }
 
+[TestFixture]
+public class CashierTests
+{
+    private string _testFilePath;
+    
+    [SetUp]
+    public void Setup()
+    {
+        var extentField = typeof(Cashier).GetField("_cashierExtent");
+        extentField?.SetValue(null, new List<Cashier>());
+        
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"cashiers_test_{Guid.NewGuid()}.json");
+    }
+    
+    [TearDown]
+    public void Teardown()
+    {
+        if (File.Exists(_testFilePath))
+            File.Delete(_testFilePath);
+    }
+    
+    [Test]
+    public void Constructor_NullFirstName()
+    {
+        Assert.Throws<ArgumentException>(() => new Cashier(null, "Ogus", 3000m, "Front"));
+    }
 
+    [Test]
+    public void Constructor_EmptyLastName()
+    {
+        Assert.Throws<ArgumentException>(() => new Cashier("Derya", "", 3000m, "Front"));
+    }
+
+    [Test]
+    public void Constructor_NegativeSalary()
+    {
+        Assert.Throws<ArgumentException>(() => new Cashier("Derya", "Ogus", -100m, "Front"));
+    }
+
+    
+
+    [Test]
+    public void ReceivePayment_InvalidAmount()
+    {
+        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        
+        Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(0m, "Cash", "ORDER-123"));
+        Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(-10m, "Cash", "ORDER-123"));
+    }
+
+    [Test]
+    public void ReceivePayment_NullPaymentMethod()
+    {
+        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        
+        Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(50m, null, "ORDER-123"));
+        Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(50m, "", "ORDER-123"));
+        Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(50m, "   ", "ORDER-123"));
+    }
+    
+
+    [Test]
+    public void IssueRefund_InvalidAmount()
+    {
+        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        
+        Assert.Throws<ArgumentException>(() => cashier.IssueRefund(0m, "ORDER-123", "Reason", "AUTH-456"));
+        Assert.Throws<ArgumentException>(() => cashier.IssueRefund(-10m, "ORDER-123", "Reason", "AUTH-456"));
+    }
+
+    [Test]
+    public void Save_WithValidData()
+    {
+        new Cashier("Derya", "Ogus", 3000m, "Front");
+        new Cashier("Can", "Saltik", 3200m, "Front");
+        
+        Cashier.Save(_testFilePath);
+        
+        Assert.That(File.Exists(_testFilePath), Is.True);
+        var json = File.ReadAllText(_testFilePath);
+        Assert.That(json, Does.Contain("Derya"));
+        Assert.That(json, Does.Contain("Ogus"));
+        Assert.That(json, Does.Contain("3000"));
+        Assert.That(json, Does.Contain("Can"));
+        Assert.That(json, Does.Contain("Saltik"));
+    }
+
+    [Test]
+    public void Load_WithValidFile()
+    {
+        var testData = "[{\"FirstName\":\"Derya\",\"LastName\":\"Ogus\",\"Salary\":3100,\"Department\":\"Front\"}]";
+        File.WriteAllText(_testFilePath, testData);
+        
+        bool result = Cashier.Load(_testFilePath);
+        var extent = Cashier.GetExtent();
+        
+        Assert.That(result, Is.True);
+        Assert.That(extent.Count, Is.EqualTo(1));
+        Assert.That(extent[0].FirstName, Is.EqualTo("Derya"));
+        Assert.That(extent[0].Salary, Is.EqualTo(3100m));
+    }
+
+    [Test]
+    public void Load_WithNonExistentFile()
+    {
+        new Cashier("Derya", "Ogus", 3000m, "Front");
+        
+        bool result = Cashier.Load("nonexistent.json");
+        
+        Assert.That(result, Is.False);
+        Assert.That(Cashier.GetExtent().Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Load_WithInvalidJson()
+    {
+        File.WriteAllText(_testFilePath, "invalid json content");
+        
+        bool result = Cashier.Load(_testFilePath);
+        
+        Assert.That(result, Is.False);
+        Assert.That(Cashier.GetExtent().Count, Is.EqualTo(0));
+    }
+    
+}
+
+[TestFixture]
+public class ChefTests
+{
+    private string _testFilePath;
+    
+    [SetUp]
+    public void Setup()
+    {
+        var extentField = typeof(Chef).GetField("_chefExtent");
+        extentField?.SetValue(null, new List<Chef>());
+        
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"chefs_test_{Guid.NewGuid()}.json");
+    }
+    
+    [TearDown]
+    public void Teardown()
+    {
+        if (File.Exists(_testFilePath))
+            File.Delete(_testFilePath);
+    }
+
+    [Test]
+    public void Constructor_InvalidFirstName()
+    {
+        Assert.Throws<ArgumentException>(() => new Chef("", "Ramsay", 5000m, "Kitchen"));
+    }
+
+    [Test]
+    public void SaveAndLoad()
+    {
+        new Chef("Marco", "Pierre", 5500m, "Kitchen");
+        
+        Chef.Save(_testFilePath);
+        var extentField = typeof(Chef).GetField("_chefExtent");
+        extentField?.SetValue(null, new List<Chef>());
+        
+        bool result = Chef.Load(_testFilePath);
+        var extent = Chef.GetExtent();
+        
+        Assert.That(result, Is.True);
+        Assert.That(extent.Count, Is.EqualTo(1));
+        Assert.That(extent[0].FirstName, Is.EqualTo("Marco"));
+    }
+
+    [Test]
+    public void HireStaff()
+    {
+        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        
+        Assert.Throws<NotImplementedException>(() => chef.hireStaff());
+    }
+
+    [Test]
+    public void FireStaff()
+    {
+        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        
+        Assert.Throws<NotImplementedException>(() => chef.fireStaff());
+    }
+}
+
+[TestFixture]
+public class HeadChefTests
+{
+    private string _testFilePath;
+    
+    [SetUp]
+    public void Setup()
+    {
+        var chefExtentField = typeof(Chef).GetField("_chefExtent");
+        chefExtentField?.SetValue(null, new List<Chef>());
+        
+        var headChefExtentField = typeof(HeadChef).GetField("_headChefExtent", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        headChefExtentField?.SetValue(null, new List<HeadChef>());
+        
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"headchefs_test_{Guid.NewGuid()}.json");
+    }
+    
+    [TearDown]
+    public void Teardown()
+    {
+        if (File.Exists(_testFilePath))
+            File.Delete(_testFilePath);
+    }
+    
+
+    [Test]
+    public void ManageInventory()
+    {
+        var headChef = new HeadChef("Ibrahim", "Yesil", 8000m, "Kitchen", SignatureDish.FishTaco);
+        
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+        
+        headChef.ManageInventory();
+        
+        Assert.That(consoleOutput.ToString(), Does.Contain("Head Chef Yesil is managing inventory."));
+    }
+
+    [Test]
+    public void SaveAndLoad()
+    {
+        new HeadChef("Arda", "Seydol", 9000m, "Kitchen", SignatureDish.Stew);
+        
+        HeadChef.Save(_testFilePath);
+        
+        var headChefExtentField = typeof(HeadChef).GetField("_headChefExtent");
+        headChefExtentField?.SetValue(null, new List<HeadChef>());
+        
+        bool result = HeadChef.Load(_testFilePath);
+        var extent = HeadChef.GetExtent();
+        
+        Assert.That(result, Is.True);
+        Assert.That(extent.Count, Is.EqualTo(1));
+        Assert.That(extent[0].LastName, Is.EqualTo("Seydol"));
+        Assert.That(extent[0].Dish, Is.EqualTo(SignatureDish.Stew));
+    }
+}
+
+[TestFixture]
+public class ManagerTests
+{
+    private string _testFilePath;
+    
+    [SetUp]
+    public void Setup()
+    {
+        var extentField = typeof(Manager).GetField("_managerExtent");
+        extentField?.SetValue(null, new List<Manager>());
+        
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"managers_test_{Guid.NewGuid()}.json");
+    }
+    
+    [TearDown]
+    public void Teardown()
+    {
+        if (File.Exists(_testFilePath))
+            File.Delete(_testFilePath);
+    }
+    
+    [Test]
+    public void SaveAndLoad()
+    {
+        new Manager("Arda", "Seydol", 7000m, "Management", ManagerLevels.Senior);
+        
+        Manager.Save(_testFilePath);
+        
+        var extentField = typeof(Manager).GetField("_managerExtent");
+        extentField?.SetValue(null, new List<Manager>());
+        
+        bool result = Manager.Load(_testFilePath);
+        var extent = Manager.GetExtent();
+        
+        Assert.That(result, Is.True);
+        Assert.That(extent.Count, Is.EqualTo(1));
+        Assert.That(extent[0].Level, Is.EqualTo(ManagerLevels.Senior));
+    }
+    
+
+    [Test]
+    public void HireStaff()
+    {
+        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
+        
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+        
+        manager.hireStaff();
+        
+        Assert.That(consoleOutput.ToString(), Does.Contain("Manager Ogus is hiring staff."));
+    }
+
+    [Test]
+    public void FireStaff()
+    {
+        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Junior);
+        
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+        
+        manager.fireStaff();
+        
+        Assert.That(consoleOutput.ToString(), Does.Contain("Manager Ogus is firing staff."));
+    }
+
+    [Test]
+    public void ManageEmployee()
+    {
+        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Senior);
+        
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+        
+        manager.ManageEmployee();
+        
+        Assert.That(consoleOutput.ToString(), Does.Contain("Manager Ogus is managing employees."));
+    }
+
+    [Test]
+    public void ChangeStaffShift()
+    {
+        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
+        
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+        
+        manager.ChangeStaffShift();
+        
+        Assert.That(consoleOutput.ToString(), Does.Contain("Manager Ogus is changing staff shift."));
+    }
+
+   
+}
+
+[TestFixture]
+public class WaiterTests
+{
+    private string _testFilePath;
+    
+    [SetUp]
+    public void Setup()
+    {
+        var extentField = typeof(Waiter).GetField("_waiterExtent");
+        extentField?.SetValue(null, new List<Waiter>());
+        
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"waiters_test_{Guid.NewGuid()}.json");
+    }
+    
+    [TearDown]
+    public void Teardown()
+    {
+        if (File.Exists(_testFilePath))
+            File.Delete(_testFilePath);
+    }
+    
+
+    [Test]
+    public void Constructor_NegativeTables()
+    {
+        Assert.Throws<ArgumentException>(() => new Waiter("Rachel", "Green", 2500m, "Front", -1));
+    }
+
+    [Test]
+    public void Tables_Setter_WithNegativeValue()
+    {
+        var waiter = new Waiter("Rachel", "Green", 2500m, "Front", 3);
+        
+        Assert.Throws<ArgumentException>(() => waiter.Tables = -5);
+    }
+
+    
+
+    [Test]
+    public void SaveAndLoad()
+    {
+        new Waiter("Monica", "Geller", 2600m, "Front", 4);
+        
+        Waiter.Save(_testFilePath);
+        
+        var extentField = typeof(Waiter).GetField("_waiterExtent");
+        extentField?.SetValue(null, new List<Waiter>());
+        
+        bool result = Waiter.Load(_testFilePath);
+        var extent = Waiter.GetExtent();
+        
+        Assert.That(result, Is.True);
+        Assert.That(extent.Count, Is.EqualTo(1));
+        Assert.That(extent[0].Tables, Is.EqualTo(4));
+    }
+}

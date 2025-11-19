@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Main.Classes.Employees;
+using Main.Classes.Restaurant;
 
 
 [Serializable]
@@ -54,9 +55,16 @@ public class Waiter : Staff
         throw new NotImplementedException();
     }
 
-    public void SeatCustomer()
+    public void SeatCustomer(Table table)
     {
-        Console.WriteLine($"Waiter {LastName} is seating a customer at table {Tables}.");
+        if (!table.IsOccupied)
+        {
+            Console.WriteLine("Customer seated");
+        }
+        else
+        {
+            Console.WriteLine("Table is ocupied");
+        }
     }
 
     public static void Save(string path = "waiters.json")
