@@ -34,15 +34,35 @@ public class Cashier : Staff
         throw new NotImplementedException();
     }
 
-    public void ReceivePayment()
-    {
-        Console.WriteLine($"Cashier {LastName} is receiving payment.");
-    }
+    public void ReceivePayment(decimal amount, string paymentMethod, string orderId)
+{
+    if (amount <= 0)
+        throw new ArgumentException("Payment amount must be positive.", nameof(amount));
+    if (string.IsNullOrWhiteSpace(paymentMethod))
+        throw new ArgumentException("Payment method cannot be empty.", nameof(paymentMethod));
+    if (string.IsNullOrWhiteSpace(orderId))
+        throw new ArgumentException("Order ID cannot be empty.", nameof(orderId));
+    
+    string transactionId = $"TXN-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8)}";
+    Console.WriteLine($"[PAYMENT RECEIVED] Order: {orderId}, Amount: {amount:C}, Method: {paymentMethod}");
+    Console.WriteLine($"[CONFIRMATION] Transaction ID: {transactionId}, Processed by Cashier: {LastName}");
+}
 
-    public void IssueRefund()
-    {
-        Console.WriteLine($"Cashier {LastName} is issuing a refund.");
-    }
+public void IssueRefund(decimal amount, string orderId, string reason, string authorizationCode)
+{
+    if (amount <= 0)
+        throw new ArgumentException("Refund amount must be positive.", nameof(amount));
+    if (string.IsNullOrWhiteSpace(orderId))
+        throw new ArgumentException("Order ID cannot be empty.", nameof(orderId));
+    if (string.IsNullOrWhiteSpace(reason))
+        throw new ArgumentException("Refund reason cannot be empty.", nameof(reason));
+    if (string.IsNullOrWhiteSpace(authorizationCode))
+        throw new ArgumentException("Manager authorization required.", nameof(authorizationCode));
+    
+    
+    Console.WriteLine($"[REFUND ISSUED] Order: {orderId}, Amount: {amount:C}, Reason: {reason}");
+    Console.WriteLine($"[AUTHORIZATION] Code: {authorizationCode}, Processed by Cashier: {LastName}");
+}
 
     public static void Save(string path = "cashiers.json")
     {
