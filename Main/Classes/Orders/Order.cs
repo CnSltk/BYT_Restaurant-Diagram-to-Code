@@ -5,103 +5,118 @@ namespace Main.Classes.Orders;
 [Serializable]
 public class Order
 {
-    private static List<Order> Orders_list = new List<Order>();
-    private static void AddToExtent(Order order)
+    
+    private static List<Order> _extent = new List<Order>();
+
+    public static IReadOnlyList<Order> Extent => _extent.AsReadOnly();
+
+    public static void AddToExtent(Order order)
     {
         if (order == null)
-            throw new ArgumentException("Manager cannot be null.");
-        Orders_list.Add(order);
+            throw new ArgumentException("Order cannot be null.");
+
+        if (!_extent.Contains(order))
+            _extent.Add(order);
     }
-    public static IReadOnlyList<Order> GetExtent()
-    {
-        return Orders_list.AsReadOnly();
-    }
+
+
     
-    public bool IsTakeAway{get;set;}
-    public static Decimal MinPrice { get; } = 30;
-    public OrderStatus Status {get;set;}
+
+    public static decimal MinPrice { get; } = 30m;
+
+    private bool _isTakeAway;
+    public bool IsTakeAway
+    {
+        get => _isTakeAway;
+        set => _isTakeAway = value;
+    }
+
+    private OrderStatus _status;
+    public OrderStatus Status
+    {
+        get => _status;
+        set
+        {
+            if (!Enum.IsDefined(typeof(OrderStatus), value))
+                throw new ArgumentException("Invalid order status.");
+
+            _status = value;
+        }
+    }
 
     private DateTime _orderTime;
-
     public DateTime OrderTime
     {
         get => _orderTime;
         set
         {
+            // Future orders should not exist
+            if (value > DateTime.Now.AddMinutes(5))
+                throw new ArgumentException("Order time cannot be in the far future.");
+
             _orderTime = value;
         }
     }
 
-    public TimeSpan OrderPrepDuration
-    {
-        get => DateTime.Now - OrderTime;
+    // Read-only computed attribute
+    public TimeSpan OrderPrepDuration => DateTime.Now - OrderTime;
 
-    }
 
-    public Order(DateTime orderTime, bool ısTakeAway, OrderStatus status)
+   
+    public Order(DateTime orderTime, bool isTakeAway, OrderStatus status)
     {
         OrderTime = orderTime;
-        IsTakeAway = ısTakeAway;
+        IsTakeAway = isTakeAway;
         Status = status;
+
+        AddToExtent(this);
     }
 
-    private static void AddOrder(Order order)
-    {
-        if (order == null)
-        {
-            throw new ArgumentException("Order cannot be null");
-        }
-        Orders_list.Add(order);
-    }
 
-    public void PlaceOrder(Customer customer, Order order)
+   
+
+    public void PlaceOrder(Customer customer)
     {
-           Console.WriteLine("Order placed");
+        if (customer == null)
+            throw new ArgumentException("Customer cannot be null.");
+
+        // Business logic would go here
+        Console.WriteLine("Order placed.");
     }
 
     public void CalculateTotal()
     {
-        Console.WriteLine("Total price calculated");
+        Console.WriteLine("Total price calculated.");
     }
 
     public void TakeOrder()
     {
-        Console.WriteLine("Order has been taken");
+        Status = OrderStatus.Preparing;
+        Console.WriteLine("Order has been taken.");
     }
+
+
     
-    public static void Save(string path = "orders.json")
+
+    public static void SaveExtent(string path = "orders.json")
     {
-        try
-        {
-            string jsonString = JsonSerializer.Serialize(Orders_list, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, jsonString);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to save orders.", ex);
-        }
+        var json = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
     }
-    
-    public static bool Load(string path = "orders.json")
+
+    public static void LoadExtent(string path = "orders.json")
     {
-        try
+        if (!File.Exists(path))
         {
-            if (!File.Exists(path))
-            {
-                Orders_list.Clear();
-                return false;
-            }
-            string jsonString = File.ReadAllText(path);
-            Orders_list = JsonSerializer.Deserialize<List<Order>>(jsonString);
-            return true;
+            _extent.Clear();
+            return;
         }
-        catch (Exception)
-        {
-            Orders_list.Clear();
-            return false;
-        }
+
+        var json = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<List<Order>>(json);
+
+        _extent = loaded ?? new List<Order>();
     }
-    
 }
 
 public enum OrderStatus

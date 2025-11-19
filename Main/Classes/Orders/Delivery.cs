@@ -5,26 +5,134 @@ namespace Main.Classes.Orders;
 [Serializable]
 public class Delivery
 {
-    private static List<Delivery> Delivery_lists = new List<Delivery>();
-    private static void AddToExtent(Delivery delivery)
+   
+    private static List<Delivery> _extent = new List<Delivery>();
+
+    public static IReadOnlyList<Delivery> Extent => _extent.AsReadOnly();
+
+    public static void AddToExtent(Delivery d)
     {
-        if (delivery == null)
+        if (d == null)
             throw new ArgumentException("Delivery cannot be null.");
-        Delivery_lists.Add(delivery);
+
+        if (!_extent.Contains(d))
+            _extent.Add(d);
     }
-    public static IReadOnlyList<Delivery> GetExtent()
+
+    public static void SaveExtent(string path = "delivery.json")
     {
-        return Delivery_lists.AsReadOnly();
+        var json = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
     }
-    public int DeliveryID { get; set; }
-    public DeliveryMethod Method { get; set; }
-    public Adress Adress { get; set; }
-    public DateTime? ScheduledAt { get; set; }
-    public DateTime? DeliveredAt { get; set; }
-    public Decimal? Fee { get; set; }
+
+    public static void LoadExtent(string path = "delivery.json")
+    {
+        if (!File.Exists(path))
+        {
+            _extent.Clear();
+            return;
+        }
+
+        var json = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<List<Delivery>>(json);
+
+        _extent = loaded ?? new List<Delivery>();
+    }
+
+
+    
+
+    private int _deliveryId;
+    public int DeliveryID
+    {
+        get => _deliveryId;
+        set
+        {
+            if (value < 1)
+                throw new ArgumentException("DeliveryID must be greater than 0.");
+            _deliveryId = value;
+        }
+    }
+
+    private DeliveryMethod _method;
+    public DeliveryMethod Method
+    {
+        get => _method;
+        set
+        {
+            if (!Enum.IsDefined(typeof(DeliveryMethod), value))
+                throw new ArgumentException("Invalid delivery method.");
+
+            _method = value;
+        }
+    }
+
+    private Adress _adress;
+    public Adress Adress
+    {
+        get => _adress;
+        set
+        {
+            if (value == null)
+                throw new ArgumentException("Adress cannot be null.");
+
+            if (string.IsNullOrWhiteSpace(value.City))
+                throw new ArgumentException("City cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(value.StreetName))
+                throw new ArgumentException("Street name cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(value.ZipCode) || value.ZipCode.Length < 4)
+                throw new ArgumentException("ZipCode is invalid.");
+
+            _adress = value;
+        }
+    }
+
+    private DateTime? _scheduledAt;
+    public DateTime? ScheduledAt
+    {
+        get => _scheduledAt;
+        set => _scheduledAt = value;
+    }
+
+    private DateTime? _deliveredAt;
+    public DateTime? DeliveredAt
+    {
+        get => _deliveredAt;
+        set
+        {
+            if (value != null && ScheduledAt != null && value < ScheduledAt)
+                throw new ArgumentException("DeliveredAt cannot be earlier than ScheduledAt.");
+
+            _deliveredAt = value;
+        }
+    }
+
+    private decimal? _fee;
+    public decimal? Fee
+    {
+        get => _fee;
+        set
+        {
+            if (value != null && value < 0)
+                throw new ArgumentException("Fee cannot be negative.");
+            _fee = value;
+        }
+    }
+
     public DeliveryStatus Status { get; set; }
 
-    public Delivery(int deliveryId, DeliveryMethod method, Adress adress, DateTime? scheduledAt, DateTime? deliveredAt, decimal? fee, DeliveryStatus status)
+
+   
+    public Delivery(
+        int deliveryId,
+        DeliveryMethod method,
+        Adress adress,
+        DateTime? scheduledAt,
+        DateTime? deliveredAt,
+        decimal? fee,
+        DeliveryStatus status)
     {
         DeliveryID = deliveryId;
         Method = method;
@@ -33,54 +141,27 @@ public class Delivery
         DeliveredAt = deliveredAt;
         Fee = fee;
         Status = status;
-    }
 
-    public static void Save(string path = "delivery.json")
-    {
-        try
-        {
-            string jsonString = JsonSerializer.Serialize(Delivery_lists, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, jsonString);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to save deliveries.", ex);
-        }
-    }
-    
-    public static bool Load(string path = "delivery.json")
-    {
-        try
-        {
-            if (!File.Exists(path))
-            {
-                Delivery_lists.Clear();
-                return false;
-            }
-            string jsonString = File.ReadAllText(path);
-            Delivery_lists = JsonSerializer.Deserialize<List<Delivery>>(jsonString);
-            return true;
-        }
-        catch (Exception)
-        {
-            Delivery_lists.Clear();
-            return false;
-        }
+        AddToExtent(this);
     }
 }
+
+
+
+public class Adress
+{
+    public string StreetName { get; set; }
+    public string City { get; set; }
+    public string ZipCode { get; set; }
+}
+
+
 
 public enum DeliveryMethod
 {
     Courier,
     InRestaurant,
     Pickup
-}
-
-public class Adress
-{
-    public string StreetName { get; set; }
-    public string City { get; set; }    
-    public string ZipCode { get; set; }
 }
 
 public enum DeliveryStatus

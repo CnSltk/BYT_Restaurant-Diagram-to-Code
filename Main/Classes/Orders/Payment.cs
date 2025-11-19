@@ -6,99 +6,144 @@ namespace Main.Classes.Orders;
 public class Payment
 {
     
-    private static List<Payment> Payment_lists = new List<Payment>();
-    private static void AddToExtent(Payment payment)
+    private static List<Payment> _extent = new List<Payment>();
+
+    public static IReadOnlyList<Payment> Extent => _extent.AsReadOnly();
+
+    public static void AddToExtent(Payment payment)
     {
         if (payment == null)
             throw new ArgumentException("Payment cannot be null.");
-        Payment_lists.Add(payment);
-    }
-    public static IReadOnlyList<Payment> GetExtent()
-    {
-        return Payment_lists.AsReadOnly();
-    }
-    
-    public int PaymentID { get; set; }
-    public PaymentMethod Method {get; set;}
-    public PaymentStatus Status { get; set; }
-    private Decimal _amount;
 
-    public Decimal Amount
+        if (!_extent.Contains(payment))
+            _extent.Add(payment);
+    }
+
+    public static void SaveExtent(string path = "payments.json")
+    {
+        var json = JsonSerializer.Serialize(_extent, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
+    }
+
+    public static void LoadExtent(string path = "payments.json")
+    {
+        if (!File.Exists(path))
+        {
+            _extent.Clear();
+            return;
+        }
+
+        var json = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<List<Payment>>(json);
+
+        _extent = loaded ?? new List<Payment>();
+    }
+
+
+    
+
+    private int _paymentId;
+    public int PaymentID
+    {
+        get => _paymentId;
+        set
+        {
+            if (value < 1)
+                throw new ArgumentException("PaymentID must be greater than 0.");
+
+            _paymentId = value;
+        }
+    }
+
+    private PaymentMethod _method;
+    public PaymentMethod Method
+    {
+        get => _method;
+        set
+        {
+            if (!Enum.IsDefined(typeof(PaymentMethod), value))
+                throw new ArgumentException("Invalid payment method.");
+
+            _method = value;
+        }
+    }
+
+    private PaymentStatus _status;
+    public PaymentStatus Status
+    {
+        get => _status;
+        set
+        {
+            if (!Enum.IsDefined(typeof(PaymentStatus), value))
+                throw new ArgumentException("Invalid payment status.");
+
+            _status = value;
+        }
+    }
+
+    private decimal _amount;
+    public decimal Amount
     {
         get => _amount;
         set
         {
             if (value < 0)
-            {
-                throw new Exception("Amount cannot be less than 0");
-            }
+                throw new ArgumentException("Amount cannot be negative.");
+
             _amount = value;
         }
     }
-    public DateTime? PaidAt { get; set; }
-    
-    private DateTime _paymenTime;
+
+    private DateTime _paymentTime;
     public DateTime PaymentTime
     {
-        get => _paymenTime;
+        get => _paymentTime;
         set
         {
-            if (value > DateTime.Now)
-            {
-                throw new Exception("Payment time cannot be in the future");
-            }
-            _paymenTime = value;
+            if (value > DateTime.Now.AddMinutes(5))
+                throw new ArgumentException("Payment time cannot be in the future.");
+
+            _paymentTime = value;
         }
     }
 
-    public Payment(decimal amount, DateTime paymenTime, int paymentId, PaymentMethod method, PaymentStatus status, DateTime? paidAt)
+    private DateTime? _paidAt;
+    public DateTime? PaidAt
+    {
+        get => _paidAt;
+        set
+        {
+            if (value != null && value < PaymentTime)
+                throw new ArgumentException("PaidAt cannot be earlier than PaymentTime.");
+
+            _paidAt = value;
+        }
+    }
+
+
+    
+    public Payment(decimal amount, DateTime paymentTime, int paymentId, PaymentMethod method, PaymentStatus status, DateTime? paidAt)
     {
         Amount = amount;
-        PaymentTime = paymenTime;
+        PaymentTime = paymentTime;
         PaymentID = paymentId;
         Method = method;
         Status = status;
         PaidAt = paidAt;
+
+        AddToExtent(this);
     }
 
+
+    
     public void Pay()
     {
-        Console.WriteLine("Payment paid");
-    }
-    
-    public static void Save(string path = "payments.json")
-    {
-        try
-        {
-            string jsonString = JsonSerializer.Serialize(Payment_lists, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, jsonString);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to save payments.", ex);
-        }
-    }
-    
-    public static bool Load(string path = "payments.json")
-    {
-        try
-        {
-            if (!File.Exists(path))
-            {
-                Payment_lists.Clear();
-                return false;
-            }
-            string jsonString = File.ReadAllText(path);
-            Payment_lists = JsonSerializer.Deserialize<List<Payment>>(jsonString);
-            return true;
-        }
-        catch (Exception)
-        {
-            Payment_lists.Clear();
-            return false;
-        }
+        Status = PaymentStatus.Completed;
+        PaidAt = DateTime.Now;
+        Console.WriteLine("Payment completed.");
     }
 }
+
 
 public enum PaymentMethod
 {
