@@ -18,8 +18,8 @@ public abstract class MenuItems
     private bool _isAvailable;
     private string? _description;
 
-    private List<string> _allergens = new();
-    public IReadOnlyList<string> Allergens => _allergens.AsReadOnly();
+    
+    public List<string> Allergens { get; set; } = new();
 
     public string Name
     {
@@ -62,6 +62,7 @@ public abstract class MenuItems
                     throw new ArgumentException("Description cannot be blank");
                 if (value.Length > 200)
                     throw new ArgumentException("Description is too long");
+
                 _description = value.Trim();
             }
             else
@@ -71,7 +72,6 @@ public abstract class MenuItems
         }
     }
 
-    
     protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
     {
         ItemId = _nextId++;
@@ -82,27 +82,6 @@ public abstract class MenuItems
         _description = description;
     }
 
-    
-    public void AddAllergen(string allergen)
-    {
-        if (string.IsNullOrWhiteSpace(allergen))
-            throw new ArgumentException("Allergen cannot be empty");
-        allergen = allergen.Trim();
-        if (allergen.Length > 50)
-            throw new ArgumentException("Allergen name is too long");
-        if (_allergens.Contains(allergen))
-            throw new ArgumentException("Allergen already exists");
-        if (_allergens.Count >= 10)
-            throw new ArgumentException("Too many allergens");
-        _allergens.Add(allergen);
-    }
-
-    public void RemoveAllergen(string allergen)
-    {
-        _allergens.Remove(allergen);
-    }
-
-    
     private static void AddToExtent(MenuItems item)
     {
         if (item == null)
@@ -117,7 +96,6 @@ public abstract class MenuItems
 
     public static void ClearExtent() => _extent.Clear();
 
-    
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,
                                        bool? isAvailable = null, string? description = null)
     {
@@ -127,7 +105,6 @@ public abstract class MenuItems
         if (description is not null) Description = description;
     }
 
-    
     public static void SaveExtent(string path)
     {
         var options = new JsonSerializerOptions
