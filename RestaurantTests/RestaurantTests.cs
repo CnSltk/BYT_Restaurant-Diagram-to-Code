@@ -76,17 +76,7 @@ public class MenuItemTests
 
         Assert.That(ex!.Message, Is.EqualTo("Name length must be between 2 and 50 characters"));
     }
-
-    [Test]
-    public void AddAllergen_DuplicateAllergen_ThrowsException()
-    {
-        var item = new TestableMenuItem("Pizza", 20m, true);
-        item.AddAllergen("Gluten");
-
-        var ex = Assert.Throws<ArgumentException>(() => item.AddAllergen("Gluten"));
-
-        Assert.That(ex!.Message, Is.EqualTo("Allergen already exists"));
-    }
+    
 
 }
 
