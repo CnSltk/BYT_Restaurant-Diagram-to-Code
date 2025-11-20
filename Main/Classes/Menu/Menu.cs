@@ -8,7 +8,7 @@ public class Menu
     private string _name = string.Empty;
     private string _version = string.Empty;
 
-    public Guid MenuId { get; }
+    public int MenuId { get; }
 
     public string Name
     {
@@ -42,9 +42,9 @@ public class Menu
 
     private static List<Menu> _extent = new();
 
-    public Menu(string name, string version, bool isActive)
+    public Menu(int menuId, string name, string version, bool isActive)
     {
-        MenuId = Guid.NewGuid();
+        MenuId = menuId;
         _name = name ?? string.Empty;
         _version = version ?? string.Empty;
         IsActive = isActive;

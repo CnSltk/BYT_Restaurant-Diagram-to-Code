@@ -12,11 +12,32 @@ public enum Unit
 [Serializable]
 public class Ingredient
 {
-    private string _name = string.Empty;
     private int _timeUsed;
+    public int TimeUsed
+    {
+        get => _timeUsed;
+        set
+        {
+            if (value < 0)
+                throw new ArgumentException("TimeUsed cannot be negative");
+            _timeUsed = value;
+        }
+    }
+    private int _ingredientId;
+    public int IngredientId
+    {
+        get => _ingredientId;
+        set
+        {
+            if (value < 0)
+                throw new ArgumentException("IngredientId cannot be negative");
+            _ingredientId = value;
+        }
+    }
 
     private static List<Ingredient> _extent = new();
 
+    private string _name = string.Empty;
     public string Name
     {
         get => _name;
@@ -33,57 +54,17 @@ public class Ingredient
 
     public Unit Unit { get; private set; }
 
-    private readonly List<string> _allergens = new();
-    public IReadOnlyList<string> Allergens => _allergens.AsReadOnly();
 
-    public int TimeUsed
-    {
-        get => _timeUsed;
-        set
-        {
-            if (value < 0)
-                throw new ArgumentException("TimeUsed cannot be negative");
-            _timeUsed = value;
-        }
-    }
+    
 
-    public Ingredient(string name, Unit unit, IEnumerable<string>? allergens = null)
+    public Ingredient(string name, Unit unit)
     {
         _name = name;
         Unit = unit;
 
-        if (allergens != null)
-        {
-            foreach (var a in allergens)
-            {
-                if (!string.IsNullOrWhiteSpace(a))
-                    AddAllergen(a);
-            }
-        }
-
         AddToExtent(this);
     }
-
-    public void AddAllergen(string allergen)
-    {
-        if (string.IsNullOrWhiteSpace(allergen))
-            throw new ArgumentException("Allergen cannot be empty");
-
-        var trimmed = allergen.Trim();
-        if (trimmed.Length > 50)
-            throw new ArgumentException("Allergen name is too long");
-        if (_allergens.Contains(trimmed))
-            throw new ArgumentException("Allergen already exists");
-        if (_allergens.Count >= 10)
-            throw new ArgumentException("Too many allergens");
-
-        _allergens.Add(trimmed);
-    }
-
-    public void RemoveAllergen(string allergen)
-    {
-        _allergens.Remove(allergen);
-    }
+    
 
     public void UseIngredient()
     {

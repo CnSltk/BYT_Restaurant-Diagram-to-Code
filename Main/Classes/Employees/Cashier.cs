@@ -6,6 +6,8 @@ public class Cashier : Staff
 {
     private static List<Cashier> _cashierExtent = new List<Cashier>();
 
+    private bool hasAccessToVault = true;
+
     private static void AddToExtent(Cashier cashier)
     {
         if (cashier == null)

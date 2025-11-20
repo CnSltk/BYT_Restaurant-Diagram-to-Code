@@ -10,7 +10,7 @@ public class MenuTests
     [Test]
     public void Menu_ValidValues_AssignedCorrectly()
     {
-        var menu = new Menu.Menu("Lunch Menu", "v1.0", true);
+        var menu = new Menu.Menu(0, "Lunch Menu", "v1.0", true);
 
         Assert.That(menu.Name, Is.EqualTo("Lunch Menu"));
         Assert.That(menu.Version, Is.EqualTo("v1.0"));
@@ -20,7 +20,7 @@ public class MenuTests
     [Test]
     public void Menu_NameTooLong_ThrowsException()
     {
-        var menu = new Menu.Menu("Lunch Menu", "v1.0", true);
+        var menu = new Menu.Menu(0,"Lunch Menu", "v1.0", true);
         var longName = new string('A', 51);
 
         var ex = Assert.Throws<ArgumentException>(() => menu.Name = longName);
@@ -33,8 +33,8 @@ public class MenuTests
     {
         Menu.Menu.ClearExtentForTest();
 
-        var m1 = new Menu.Menu("Lunch Menu", "v1.0", true);
-        var m2 = new Menu.Menu("Dinner Menu", "v2.0", false);
+        var m1 = new Menu.Menu(0,"Lunch Menu", "v1.0", true);
+        var m2 = new Menu.Menu(1,"Dinner Menu", "v2.0", false);
 
         var path = "Menu_Test.json";
         if (File.Exists(path))

@@ -234,29 +234,13 @@ public class IngredientTests
     {
         var ingredient = new Ingredient(
             name: "Tomato",
-            unit: Unit.Gram,
-            allergens: new[] { "None" }
+            unit: Unit.Gram
         );
 
         Assert.That(ingredient.Name, Is.EqualTo("Tomato"));
         Assert.That(ingredient.Unit, Is.EqualTo(Unit.Gram));
-        Assert.That(ingredient.Allergens.Count, Is.EqualTo(1));
-        Assert.That(ingredient.Allergens.Contains("None"), Is.True);
     }
-
-    [Test]
-    public void Ingredient_AddAllergen_Empty_ThrowsException()
-    {
-        var ingredient = new Ingredient(
-            name: "Cheese",
-            unit: Unit.Gram,
-            allergens: null
-        );
-
-        var ex = Assert.Throws<ArgumentException>(() => ingredient.AddAllergen(" "));
-
-        Assert.That(ex!.Message, Is.EqualTo("Allergen cannot be empty"));
-    }
+    
     
 }
 
