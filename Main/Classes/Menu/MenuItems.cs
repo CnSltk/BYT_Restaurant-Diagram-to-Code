@@ -10,7 +10,7 @@ public abstract class MenuItems
     private static List<MenuItems> _extent = new();
     public static IReadOnlyList<MenuItems> Extent => _extent.AsReadOnly();
 
-    public Guid ItemId { get; }
+    public int ItemId { get; }
 
     private string _name = string.Empty;
     private decimal _price;
