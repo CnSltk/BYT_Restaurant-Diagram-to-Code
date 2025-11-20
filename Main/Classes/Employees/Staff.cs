@@ -54,9 +54,9 @@ public abstract class Staff
         }
     }
     
-    public string Phone { get; set; }
+    public string? Phone { get; set; }
     
-    public string Email { get; set; }
+    public string? Email { get; set; }
     
     
     protected Staff(string firstName, string lastName, decimal salary, string department)
