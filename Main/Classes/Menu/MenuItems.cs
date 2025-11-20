@@ -1,14 +1,15 @@
-using System.Xml.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Menu;
 
 [Serializable]
-[XmlInclude(typeof(Food))]
-[XmlInclude(typeof(Beverage))]
 public abstract class MenuItems
 {
     private static List<MenuItems> _extent = new();
     public static IReadOnlyList<MenuItems> Extent => _extent.AsReadOnly();
+
+    private static int _nextId = 1;
 
     public int ItemId { get; }
 
@@ -70,15 +71,18 @@ public abstract class MenuItems
         }
     }
 
+    
     protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
     {
-        ItemId = Guid.NewGuid();
+        ItemId = _nextId++;
+
         _name = name;
         _price = price;
         _isAvailable = isAvailable;
         _description = description;
     }
 
+    
     public void AddAllergen(string allergen)
     {
         if (string.IsNullOrWhiteSpace(allergen))
@@ -98,6 +102,7 @@ public abstract class MenuItems
         _allergens.Remove(allergen);
     }
 
+    
     private static void AddToExtent(MenuItems item)
     {
         if (item == null)
@@ -110,6 +115,9 @@ public abstract class MenuItems
         AddToExtent(item);
     }
 
+    public static void ClearExtent() => _extent.Clear();
+
+    
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,
                                        bool? isAvailable = null, string? description = null)
     {
@@ -119,11 +127,16 @@ public abstract class MenuItems
         if (description is not null) Description = description;
     }
 
+    
     public static void SaveExtent(string path)
     {
-        using var fs = File.Create(path);
-        var serializer = new XmlSerializer(typeof(List<MenuItems>));
-        serializer.Serialize(fs, _extent);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            IncludeFields = true
+        };
+
+        File.WriteAllText(path, JsonSerializer.Serialize(_extent, options));
     }
 
     public static void LoadExtent(string path)
@@ -134,11 +147,14 @@ public abstract class MenuItems
             return;
         }
 
-        using var fs = File.OpenRead(path);
-        var serializer = new XmlSerializer(typeof(List<MenuItems>));
-        var loaded = serializer.Deserialize(fs) as List<MenuItems>;
+        var options = new JsonSerializerOptions
+        {
+            IncludeFields = true
+        };
+
+        var json = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<List<MenuItems>>(json, options);
+
         _extent = loaded ?? new List<MenuItems>();
     }
-
-    public static void ClearExtent() => _extent.Clear();
 }
