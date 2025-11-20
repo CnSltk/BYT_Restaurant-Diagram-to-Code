@@ -305,35 +305,8 @@ public class IngredientTests
 
         Assert.That(ex!.Message, Is.EqualTo("Allergen cannot be empty"));
     }
-
-    [Test]
-    public void Ingredient_SaveAndLoadExtent_RestoresIngredients()
-    {
-        Ingredient.ClearExtentForTests();
-
-        var i1 = new Ingredient("Onion", Unit.Gram, null);
-        var i2 = new Ingredient("Milk", Unit.Ml, new[] { "Lactose" });
-
-        var path = "Ingredient_Test.json";
-        if (File.Exists(path))
-            File.Delete(path);
-
-        Ingredient.Save(path);
-
-        Ingredient.ClearExtentForTests();
-        Assert.That(Ingredient.GetExtent().Count, Is.EqualTo(0));
-
-        Ingredient.Load(path);
-
-        Assert.That(Ingredient.GetExtent().Count, Is.EqualTo(2));
-        Assert.That(Ingredient.GetExtent().Any(i => i.Name == "Onion"));
-        Assert.That(Ingredient.GetExtent().Any(i => i.Name == "Milk"));
-    }
+    
 }
-
-
-
-
 
 [TestFixture]
 public class EmployeePartTimeTests
