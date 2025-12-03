@@ -2,11 +2,10 @@ using System.Text.Json;
 
 namespace Main.Classes.Orders;
 
+[Serializable]
 public class Customer
 {
-    
     private static List<Customer> _extent = new List<Customer>();
-
     public static IReadOnlyList<Customer> Extent => _extent.AsReadOnly();
 
     public static void AddToExtent(Customer c)
@@ -18,13 +17,13 @@ public class Customer
             _extent.Add(c);
     }
 
-    public static void SaveExtent(string path)
+    public static void SaveExtent(string path = "customer.json")
     {
         var json = JsonSerializer.Serialize(_extent);
         File.WriteAllText(path, json);
     }
 
-    public static void LoadExtent(string path)
+    public static void LoadExtent(string path = "customer.json")
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("Extent file not found.");
@@ -36,7 +35,9 @@ public class Customer
             _extent = loaded;
     }
 
-   
+    // ============================
+    // ATTRIBUTES
+    // ============================
 
     private int _customerId;
     public int CustomerId
@@ -46,7 +47,6 @@ public class Customer
         {
             if (value < 1)
                 throw new ArgumentException("CustomerId must be greater than 0.");
-
             _customerId = value;
         }
     }
@@ -93,7 +93,6 @@ public class Customer
             {
                 if (value.Length < 6)
                     throw new ArgumentException("Phone number must have at least 6 digits.");
-
                 if (!value.All(char.IsDigit))
                     throw new ArgumentException("Phone number must contain only digits.");
             }
@@ -118,7 +117,31 @@ public class Customer
         }
     }
 
-   
+    // ============================
+    // ASSOCIATION: 1 Customer -- * Orders
+    // ============================
+
+    private List<Order> _orders = new List<Order>();
+    public IReadOnlyList<Order> Orders => _orders.AsReadOnly();
+
+    public void AddOrder(Order order)
+    {
+        if (order == null)
+            throw new ArgumentException("Order cannot be null.");
+
+        if (!_orders.Contains(order))
+        {
+            _orders.Add(order);
+
+            if (order.Customer != this)
+                order.Customer = this;
+        }
+    }
+
+    // ============================
+    // CONSTRUCTOR
+    // ============================
+
     public Customer(int customerId, string name, string surname, string? phoneNumber, string? email)
     {
         CustomerId = customerId;

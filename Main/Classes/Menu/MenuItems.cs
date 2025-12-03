@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Main.Classes.Orders;
 
-namespace Menu;
+namespace Main.Classes.Menu;
 
 [Serializable]
 public abstract class MenuItems
@@ -18,8 +19,31 @@ public abstract class MenuItems
     private bool _isAvailable;
     private string? _description;
 
-    
     public List<string> Allergens { get; set; } = new();
+
+    // ============================
+    // ASSOCIATION: MenuItems → Quantity (*)
+    // ============================
+
+    private List<Quantity> _quantities = new();
+    public IReadOnlyList<Quantity> Quantities => _quantities.AsReadOnly();
+
+    public void AddQuantity(Quantity q)
+    {
+        if (q == null)
+            throw new ArgumentException("Quantity cannot be null.");
+
+        if (!_quantities.Contains(q))
+            _quantities.Add(q);
+
+        // Check consistency
+        if (q.Item != this)
+            throw new InvalidOperationException("Quantity belongs to a different MenuItem.");
+    }
+
+    // ============================
+    // ATTRIBUTES
+    // ============================
 
     public string Name
     {
@@ -72,14 +96,20 @@ public abstract class MenuItems
         }
     }
 
+    // ============================
+    // CONSTRUCTOR
+    // ============================
+
     protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
     {
         ItemId = _nextId++;
 
-        _name = name;
-        _price = price;
-        _isAvailable = isAvailable;
-        _description = description;
+        Name = name;
+        Price = price;
+        IsAvailable = isAvailable;
+        Description = description;
+
+        AddToExtent(this);
     }
 
     private static void AddToExtent(MenuItems item)
@@ -87,11 +117,6 @@ public abstract class MenuItems
         if (item == null)
             throw new ArgumentNullException(nameof(item));
         _extent.Add(item);
-    }
-
-    public static void CreateMenuItem(MenuItems item)
-    {
-        AddToExtent(item);
     }
 
     public static void ClearExtent() => _extent.Clear();
@@ -103,35 +128,5 @@ public abstract class MenuItems
         if (price is not null) Price = price.Value;
         if (isAvailable is not null) IsAvailable = isAvailable.Value;
         if (description is not null) Description = description;
-    }
-
-    public static void SaveExtent(string path)
-    {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IncludeFields = true
-        };
-
-        File.WriteAllText(path, JsonSerializer.Serialize(_extent, options));
-    }
-
-    public static void LoadExtent(string path)
-    {
-        if (!File.Exists(path))
-        {
-            _extent = new List<MenuItems>();
-            return;
-        }
-
-        var options = new JsonSerializerOptions
-        {
-            IncludeFields = true
-        };
-
-        var json = File.ReadAllText(path);
-        var loaded = JsonSerializer.Deserialize<List<MenuItems>>(json, options);
-
-        _extent = loaded ?? new List<MenuItems>();
     }
 }

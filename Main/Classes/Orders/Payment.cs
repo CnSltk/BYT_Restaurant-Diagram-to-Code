@@ -5,9 +5,7 @@ namespace Main.Classes.Orders;
 [Serializable]
 public class Payment
 {
-    
     private static List<Payment> _extent = new List<Payment>();
-
     public static IReadOnlyList<Payment> Extent => _extent.AsReadOnly();
 
     public static void AddToExtent(Payment payment)
@@ -39,9 +37,6 @@ public class Payment
         _extent = loaded ?? new List<Payment>();
     }
 
-
-    
-
     private int _paymentId;
     public int PaymentID
     {
@@ -50,7 +45,6 @@ public class Payment
         {
             if (value < 1)
                 throw new ArgumentException("PaymentID must be greater than 0.");
-
             _paymentId = value;
         }
     }
@@ -63,7 +57,6 @@ public class Payment
         {
             if (!Enum.IsDefined(typeof(PaymentMethod), value))
                 throw new ArgumentException("Invalid payment method.");
-
             _method = value;
         }
     }
@@ -76,7 +69,6 @@ public class Payment
         {
             if (!Enum.IsDefined(typeof(PaymentStatus), value))
                 throw new ArgumentException("Invalid payment status.");
-
             _status = value;
         }
     }
@@ -89,7 +81,6 @@ public class Payment
         {
             if (value < 0)
                 throw new ArgumentException("Amount cannot be negative.");
-
             _amount = value;
         }
     }
@@ -102,7 +93,6 @@ public class Payment
         {
             if (value > DateTime.Now.AddMinutes(5))
                 throw new ArgumentException("Payment time cannot be in the future.");
-
             _paymentTime = value;
         }
     }
@@ -115,14 +105,42 @@ public class Payment
         {
             if (value != null && value < PaymentTime)
                 throw new ArgumentException("PaidAt cannot be earlier than PaymentTime.");
-
             _paidAt = value;
         }
     }
 
+    // ============================
+    // ASSOCIATION: Payment → Order (1)
+    // ============================
 
-    
-    public Payment(decimal amount, DateTime paymentTime, int paymentId, PaymentMethod method, PaymentStatus status, DateTime? paidAt)
+    private Order _order;
+    public Order Order
+    {
+        get => _order;
+        set
+        {
+            if (value == null)
+                throw new ArgumentException("Payment must have an Order.");
+
+            _order = value;
+
+            if (!value.Payments.Contains(this))
+                value.AddPayment(this);
+        }
+    }
+
+    // ============================
+    // CONSTRUCTOR
+    // ============================
+
+    public Payment(
+        decimal amount,
+        DateTime paymentTime,
+        int paymentId,
+        PaymentMethod method,
+        PaymentStatus status,
+        DateTime? paidAt,
+        Order order)
     {
         Amount = amount;
         PaymentTime = paymentTime;
@@ -131,11 +149,11 @@ public class Payment
         Status = status;
         PaidAt = paidAt;
 
+        Order = order;
+
         AddToExtent(this);
     }
 
-
-    
     public void Pay()
     {
         Status = PaymentStatus.Completed;
@@ -143,7 +161,6 @@ public class Payment
         Console.WriteLine("Payment completed.");
     }
 }
-
 
 public enum PaymentMethod
 {

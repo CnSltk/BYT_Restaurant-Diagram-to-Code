@@ -10,7 +10,6 @@
     <ItemGroup>
       <Folder Include="Classes\Employees\" />
       <Folder Include="Classes\Menu\" />
-      <Folder Include="Classes\Orders\" />
       <Folder Include="Classes\Restaurant\" />
     </ItemGroup>
 
