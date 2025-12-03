@@ -24,19 +24,19 @@ public class CashierTests
     [Test]
     public void Constructor_NullFirstName()
     {
-        Assert.Throws<ArgumentException>(() => new Cashier(null, "Ogus", 3000m, "Front"));
+        Assert.Throws<ArgumentException>(() => new Cashier(1, null, "Ogus", 3000m, "Front"));
     }
 
     [Test]
     public void Constructor_EmptyLastName()
     {
-        Assert.Throws<ArgumentException>(() => new Cashier("Derya", "", 3000m, "Front"));
+        Assert.Throws<ArgumentException>(() => new Cashier(2, "Derya", "", 3000m, "Front"));
     }
 
     [Test]
     public void Constructor_NegativeSalary()
     {
-        Assert.Throws<ArgumentException>(() => new Cashier("Derya", "Ogus", -100m, "Front"));
+        Assert.Throws<ArgumentException>(() => new Cashier(3, "Derya", "Ogus", -100m, "Front"));
     }
 
     
@@ -44,7 +44,7 @@ public class CashierTests
     [Test]
     public void ReceivePayment_InvalidAmount()
     {
-        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        var cashier = new Cashier(4, "Derya", "Ogus", 3000m, "Front");
         
         Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(0m, "Cash", "ORDER-123"));
         Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(-10m, "Cash", "ORDER-123"));
@@ -53,7 +53,7 @@ public class CashierTests
     [Test]
     public void ReceivePayment_NullPaymentMethod()
     {
-        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        var cashier = new Cashier(5, "Derya", "Ogus", 3000m, "Front");
         
         Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(50m, null, "ORDER-123"));
         Assert.Throws<ArgumentException>(() => cashier.ReceivePayment(50m, "", "ORDER-123"));
@@ -64,7 +64,7 @@ public class CashierTests
     [Test]
     public void IssueRefund_InvalidAmount()
     {
-        var cashier = new Cashier("Derya", "Ogus", 3000m, "Front");
+        var cashier = new Cashier(6, "Derya", "Ogus", 3000m, "Front");
         
         Assert.Throws<ArgumentException>(() => cashier.IssueRefund(0m, "ORDER-123", "Reason", "AUTH-456"));
         Assert.Throws<ArgumentException>(() => cashier.IssueRefund(-10m, "ORDER-123", "Reason", "AUTH-456"));
@@ -73,8 +73,8 @@ public class CashierTests
     [Test]
     public void Save_WithValidData()
     {
-        new Cashier("Derya", "Ogus", 3000m, "Front");
-        new Cashier("Can", "Saltik", 3200m, "Front");
+        new Cashier(7, "Derya", "Ogus", 3000m, "Front");
+        new Cashier(8, "Can", "Saltik", 3200m, "Front");
         
         Cashier.Save(_testFilePath);
         
@@ -105,7 +105,7 @@ public class CashierTests
     [Test]
     public void Load_WithNonExistentFile()
     {
-        new Cashier("Derya", "Ogus", 3000m, "Front");
+        new Cashier(9, "Derya", "Ogus", 3000m, "Front");
         
         bool result = Cashier.Load("nonexistent.json");
         

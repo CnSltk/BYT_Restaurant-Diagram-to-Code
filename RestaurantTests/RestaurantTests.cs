@@ -239,8 +239,8 @@ public class EmployeeStaffTests
 {
     public class TestableStaff : Staff
     {
-        public TestableStaff(string firstName, string lastName, decimal salary, string department)
-            : base(firstName, lastName, salary, department)
+        public TestableStaff(int staffId, string firstName, string lastName, decimal salary, string department)
+            : base(staffId, firstName, lastName, salary, department)
         {
         }
 
@@ -251,7 +251,7 @@ public class EmployeeStaffTests
     [Test]
     public void Constructor_ValidValues_AssignedCorrectly()
     {
-        var staff = new TestableStaff("Derya", "Ogus", 50000, "IT");
+        var staff = new TestableStaff(1,"Derya", "Ogus", 50000, "IT");
 
         Assert.That(staff.FirstName, Is.EqualTo("Derya"));
         Assert.That(staff.LastName, Is.EqualTo("Ogus"));
@@ -263,7 +263,7 @@ public class EmployeeStaffTests
     public void Constructor_NullFirstName_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
-            new TestableStaff(null, "Ogus", 50000, "IT")
+            new TestableStaff(1,null, "Ogus", 50000, "IT")
         );
 
         Assert.That(ex.Message, Is.EqualTo("First name cannot be empty"));
@@ -273,7 +273,7 @@ public class EmployeeStaffTests
     public void Constructor_EmptyFirstName_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
-            new TestableStaff("", "Ogus", 50000, "IT")
+            new TestableStaff(1,"", "Ogus", 50000, "IT")
         );
 
         Assert.That(ex.Message, Is.EqualTo("First name cannot be empty"));
@@ -337,6 +337,12 @@ public class DeliveryTests
         ZipCode = "00-001"
     };
 
+    private Customer DummyCustomer =>
+        new Customer(999, "Test", "Tester", "123456", "test@test.com");
+
+    private Order DummyOrder =>
+        new Order(DateTime.Now.AddMinutes(-5), false, OrderStatus.Preparing, DummyCustomer);
+
     [Test]
     public void DeliveryID_MustBe_GreaterThanZero()
     {
@@ -348,7 +354,8 @@ public class DeliveryTests
                 DateTime.Now,
                 null,
                 10m,
-                DeliveryStatus.Scheduled
+                DeliveryStatus.Scheduled,
+                DummyOrder   
             ));
     }
 
@@ -356,7 +363,7 @@ public class DeliveryTests
     public void DeliveredAt_CannotBeEarlierThan_ScheduledAt()
     {
         var scheduled = DateTime.Now;
-        var delivered = scheduled.AddHours(-1); 
+        var delivered = scheduled.AddHours(-1);
 
         Assert.Throws<ArgumentException>(() =>
             new Delivery(
@@ -366,7 +373,8 @@ public class DeliveryTests
                 scheduled,
                 delivered,
                 10m,
-                DeliveryStatus.Scheduled
+                DeliveryStatus.Scheduled,
+                DummyOrder  
             ));
     }
 
@@ -381,23 +389,30 @@ public class DeliveryTests
                 DateTime.Now,
                 null,
                 5m,
-                DeliveryStatus.OnRoute
+                DeliveryStatus.OnRoute,
+                DummyOrder  
             ));
     }
 }
 
 
+
+
 [TestFixture]
 public class OrderTests
 {
+    private Customer DummyCustomer => 
+        new Customer(1, "Test", "User", "123456", "test@test.com");
+
     [Test]
     public void OrderTime_CannotBeInFuture()
     {
         Assert.Throws<ArgumentException>(() =>
             new Order(
-                DateTime.Now.AddHours(1), 
+                DateTime.Now.AddHours(1),
                 true,
-                OrderStatus.Preparing
+                OrderStatus.Preparing,
+                DummyCustomer
             ));
     }
 
@@ -409,7 +424,8 @@ public class OrderTests
         var o = new Order(
             DateTime.Now.AddMinutes(-10),
             false,
-            OrderStatus.Preparing
+            OrderStatus.Preparing,
+            DummyCustomer
         );
 
         Assert.That(Order.Extent.Count, Is.EqualTo(countBefore + 1));
@@ -421,7 +437,12 @@ public class OrderTests
     {
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
 
-        var o = new Order(tenMinutesAgo, false, OrderStatus.Prepared);
+        var o = new Order(
+            tenMinutesAgo,
+            false,
+            OrderStatus.Prepared,
+            DummyCustomer
+        );
 
         Assert.That(o.OrderPrepDuration.TotalMinutes,
             Is.GreaterThanOrEqualTo(9).And.LessThanOrEqualTo(11));
@@ -430,9 +451,14 @@ public class OrderTests
 
 
 
+
 [TestFixture]
 public class PaymentTests
 {
+    private Order DummyOrder =>
+        new Order(DateTime.Now.AddMinutes(-5), false, OrderStatus.Preparing,
+            new Customer(2, "Pay", "Tester", "123456", "pay@test.com"));
+
     [Test]
     public void PaymentID_MustBeGreaterThanZero()
     {
@@ -440,10 +466,11 @@ public class PaymentTests
             new Payment(
                 50m,
                 DateTime.Now,
-                0, 
+                0,
                 PaymentMethod.Cash,
                 PaymentStatus.Pending,
-                null
+                null,
+                DummyOrder
             ));
     }
 
@@ -453,11 +480,12 @@ public class PaymentTests
         Assert.Throws<ArgumentException>(() =>
             new Payment(
                 10m,
-                DateTime.Now.AddHours(2), 
+                DateTime.Now.AddHours(2),
                 1,
                 PaymentMethod.Card,
                 PaymentStatus.Pending,
-                null
+                null,
+                DummyOrder
             ));
     }
 
@@ -465,7 +493,7 @@ public class PaymentTests
     public void PaidAt_CannotBeEarlierThan_PaymentTime()
     {
         var paymentTime = DateTime.Now.AddMinutes(-5);
-        var paidAt = paymentTime.AddMinutes(-10); 
+        var paidAt = paymentTime.AddMinutes(-10);
 
         Assert.Throws<ArgumentException>(() =>
             new Payment(
@@ -474,10 +502,12 @@ public class PaymentTests
                 1,
                 PaymentMethod.Online,
                 PaymentStatus.Completed,
-                paidAt
+                paidAt,
+                DummyOrder
             ));
     }
 }
+
 
 [TestFixture]
 public class ChefTests
@@ -503,13 +533,13 @@ public class ChefTests
     [Test]
     public void Constructor_InvalidFirstName()
     {
-        Assert.Throws<ArgumentException>(() => new Chef("", "Ramsay", 5000m, "Kitchen"));
+        Assert.Throws<ArgumentException>(() => new Chef(1,"", "Ramsay", 5000m, "Kitchen"));
     }
 
     [Test]
     public void SaveAndLoad()
     {
-        new Chef("Marco", "Pierre", 5500m, "Kitchen");
+        new Chef(2,"Marco", "Pierre", 5500m, "Kitchen");
         
         Chef.Save(_testFilePath);
         var extentField = typeof(Chef).GetField("_chefExtent");
@@ -526,7 +556,7 @@ public class ChefTests
     [Test]
     public void HireStaff()
     {
-        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        var chef = new Chef(3,"Gordon", "Ramsay", 5000m, "Kitchen");
         
         Assert.Throws<NotImplementedException>(() => chef.hireStaff());
     }
@@ -534,7 +564,7 @@ public class ChefTests
     [Test]
     public void FireStaff()
     {
-        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        var chef = new Chef(4,"Gordon", "Ramsay", 5000m, "Kitchen");
         
         Assert.Throws<NotImplementedException>(() => chef.fireStaff());
     }
@@ -569,7 +599,7 @@ public class HeadChefTests
     [Test]
     public void ManageInventory()
     {
-        var headChef = new HeadChef("Ibrahim", "Yesil", 8000m, "Kitchen", SignatureDish.FishTaco);
+        var headChef = new HeadChef(5,"Ibrahim", "Yesil", 8000m, "Kitchen", SignatureDish.FishTaco);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);
@@ -582,7 +612,7 @@ public class HeadChefTests
     [Test]
     public void SaveAndLoad()
     {
-        new HeadChef("Arda", "Seydol", 9000m, "Kitchen", SignatureDish.Stew);
+        new HeadChef(6,"Arda", "Seydol", 9000m, "Kitchen", SignatureDish.Stew);
         
         HeadChef.Save(_testFilePath);
         
@@ -624,13 +654,13 @@ public class WaiterTests
     [Test]
     public void Constructor_NegativeTables()
     {
-        Assert.Throws<ArgumentException>(() => new Waiter("Rachel", "Green", 2500m, "Front", -1));
+        Assert.Throws<ArgumentException>(() => new Waiter(1,"Rachel", "Green", 2500m, "Front", -1));
     }
 
     [Test]
     public void Tables_Setter_WithNegativeValue()
     {
-        var waiter = new Waiter("Rachel", "Green", 2500m, "Front", 3);
+        var waiter = new Waiter(1,"Rachel", "Green", 2500m, "Front", 3);
         
         Assert.Throws<ArgumentException>(() => waiter.Tables = -5);
     }
@@ -640,7 +670,7 @@ public class WaiterTests
     [Test]
     public void SaveAndLoad()
     {
-        new Waiter("Monica", "Geller", 2600m, "Front", 4);
+        new Waiter(1,"Monica", "Geller", 2600m, "Front", 4);
         
         Waiter.Save(_testFilePath);
         
