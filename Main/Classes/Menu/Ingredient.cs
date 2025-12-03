@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using Main.Classes.Employees; // Only if needed elsewhere
+using System.Collections.Generic;
 
 namespace Main.Classes.Menu;
 
@@ -23,19 +25,8 @@ public class Ingredient
             _timeUsed = value;
         }
     }
-    private int _ingredientId;
-    public int IngredientId
-    {
-        get => _ingredientId;
-        set
-        {
-            if (value < 0)
-                throw new ArgumentException("IngredientId cannot be negative");
-            _ingredientId = value;
-        }
-    }
 
-    private static List<Ingredient> _extent = new();
+    public int IngredientId { get; private set; }
 
     private string _name = string.Empty;
     public string Name
@@ -45,26 +36,43 @@ public class Ingredient
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Ingredient name can't be empty");
+
             var trimmed = value.Trim();
             if (trimmed.Length < 2 || trimmed.Length > 50)
                 throw new ArgumentException("Ingredient name length must be between 2 and 50 characters");
+
             _name = trimmed;
         }
     }
 
     public Unit Unit { get; private set; }
 
+    // ----- RELATION WITH CHEF -----
+    private readonly List<Chef> _chefs = new();
+    public IReadOnlyCollection<Chef> Chefs => _chefs.AsReadOnly();
 
-    
-
-    public Ingredient(string name, Unit unit)
+    internal void AddChef(Chef chef)
     {
-        _name = name;
+        if (!_chefs.Contains(chef))
+            _chefs.Add(chef);
+    }
+
+    internal void RemoveChef(Chef chef)
+    {
+        _chefs.Remove(chef);
+    }
+
+    // ----- EXTENT -----
+    private static List<Ingredient> _extent = new();
+
+    public Ingredient(int ingredientId, string name, Unit unit)
+    {
+        IngredientId = ingredientId;
+        Name = name;
         Unit = unit;
 
         AddToExtent(this);
     }
-    
 
     public void UseIngredient()
     {

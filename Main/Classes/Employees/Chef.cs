@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Main.Classes.Menu;    // Needed for Ingredient
+using System.Collections.Generic;
 using Main.Classes.Employees;
 
 [Serializable]
@@ -6,6 +8,34 @@ public class Chef : Staff
 {
     private static List<Chef> _chefExtent = new List<Chef>();
 
+    // ----- RELATION WITH INGREDIENT -----
+    private readonly List<Ingredient> _ingredients = new();
+    public IReadOnlyCollection<Ingredient> Ingredients => _ingredients.AsReadOnly();
+
+    public void AddIngredient(Ingredient ingredient)
+    {
+        if (ingredient == null)
+            throw new ArgumentNullException(nameof(ingredient));
+
+        if (!_ingredients.Contains(ingredient))
+        {
+            _ingredients.Add(ingredient);
+            ingredient.AddChef(this); // update reverse side
+        }
+    }
+
+    public void RemoveIngredient(Ingredient ingredient)
+    {
+        if (ingredient == null)
+            return;
+
+        if (_ingredients.Remove(ingredient))
+        {
+            ingredient.RemoveChef(this); // update reverse
+        }
+    }
+
+    // ----- EXTENT -----
     private static void AddToExtent(Chef chef)
     {
         if (chef == null)
@@ -18,9 +48,8 @@ public class Chef : Staff
         return _chefExtent.AsReadOnly();
     }
 
-
-    public Chef(int staffId,string firstName, string lastName, decimal salary, string department)
-        : base(staffId,firstName, lastName, salary, department)
+    public Chef(int staffId, string firstName, string lastName, decimal salary, string department)
+        : base(staffId, firstName, lastName, salary, department)
     {
         AddToExtent(this);
     }
