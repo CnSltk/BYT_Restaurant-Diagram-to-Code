@@ -1,5 +1,9 @@
-﻿using System.Text.Json;
-using Main.Classes.Employees;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Menu;            // ← THIS IS THE CORRECT NAMESPACE
 
 namespace Main.Classes.Restaurant;
 
@@ -8,8 +12,8 @@ public class Restaurant
 {
     public int MaxCapacity { get; } = 100;
     public int RestaurantId { get; }
-    private string _name;
 
+    private string _name = string.Empty;
     public string Name
     {
         get => _name;
@@ -20,7 +24,8 @@ public class Restaurant
             _name = value.Trim();
         }
     }
-    private string _openingHour;
+
+    private string _openingHour = string.Empty;
     public string OpeningHours
     {
         get => _openingHour;
@@ -31,58 +36,141 @@ public class Restaurant
             _openingHour = value.Trim();
         }
     }
-    private static List<Restaurant> _Restaurantextent = new List<Restaurant>();
-    public Restaurant (int restaurantId, string name,string openingHours)
+
+    // ----- TABLES -----
+    internal readonly List<Table> _tables = new();
+    public IReadOnlyCollection<Table> Tables => _tables.AsReadOnly();
+
+    // ----- MENUS (qualified by name) -----
+    [JsonIgnore]
+    private readonly Dictionary<string, global::Menu.Menu> _menus =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    [JsonIgnore]
+    public IReadOnlyCollection<global::Menu.Menu> Menus =>
+        _menus.Values.ToList().AsReadOnly();
+
+    private static readonly List<Restaurant> _extent = new();
+
+    public Restaurant(int restaurantId, string name, string openingHours)
     {
-        if (restaurantId <= 0) 
+        if (restaurantId <= 0)
             throw new ArgumentException("Restaurant id can't be zero or negative");
-        
+
         RestaurantId = restaurantId;
         Name = name;
         OpeningHours = openingHours;
 
         AddToExtent(this);
     }
+
     private static void AddToExtent(Restaurant restaurant)
     {
-        if (restaurant == null)
-            throw new ArgumentNullException(nameof(restaurant));
-        _Restaurantextent.Add(restaurant);
+        if (_extent.Any(r => r.RestaurantId == restaurant.RestaurantId))
+            throw new ArgumentException($"Restaurant with ID {restaurant.RestaurantId} already exists");
+
+        _extent.Add(restaurant);
     }
-    public static IReadOnlyList<Restaurant> GetExtent() => _Restaurantextent.AsReadOnly();
-    public static void ClearExtentForTest() => _Restaurantextent.Clear();
-    
+
+    public static IReadOnlyCollection<Restaurant> GetExtent() => _extent.AsReadOnly();
+    public static void ClearExtentForTest() => _extent.Clear();
+
+    // ----- MENU MANAGEMENT -----
+
+    public global::Menu.Menu AddMenu(int menuId, string name, string version, bool isActive)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Menu name cannot be empty.");
+
+        var key = name.Trim();
+
+        if (_menus.ContainsKey(key))
+            throw new ArgumentException($"Menu '{key}' already exists.");
+
+        var menu = new global::Menu.Menu(menuId, key, version, isActive);
+        _menus.Add(key, menu);
+
+        return menu;
+    }
+
+    public global::Menu.Menu? GetMenuByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Menu name cannot be empty.");
+
+        _menus.TryGetValue(name.Trim(), out var menu);
+        return menu;
+    }
+
+    public bool RemoveMenu(string name)
+    {
+        var key = name.Trim();
+
+        if (!_menus.ContainsKey(key))
+            return false;
+
+        if (_menus.Count == 1)
+            throw new InvalidOperationException("Restaurant must have at least one menu.");
+
+        var menu = _menus[key];
+        _menus.Remove(key);
+
+        global::Menu.Menu.RemoveFromExtent(menu);
+
+        return true;
+    }
+
+    // ----- TABLES -----
+
+    public Table AddTable(int tableId, int number)
+    {
+        if (_tables.Any(t => t.TableId == tableId))
+            throw new ArgumentException($"Table {tableId} already exists in restaurant {RestaurantId}");
+
+        return new Table(tableId, number,this);
+    }
+
+    // ----- DELETION -----
+
+    public void DeleteRestaurant()
+    {
+        foreach (var menu in _menus.Values.ToList())
+            global::Menu.Menu.RemoveFromExtent(menu);
+
+        _menus.Clear();
+        _tables.Clear();
+
+        _extent.Remove(this);
+    }
+
+    // ----- SAVE / LOAD -----
+
     public static void Save(string path = "Restaurant.json")
     {
-        try
-        {
-            string jsonString = JsonSerializer.Serialize(_Restaurantextent, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, jsonString);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to save PartTime.", ex);
-        }
+        var json = JsonSerializer.Serialize(_extent,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve
+            });
+
+        File.WriteAllText(path, json);
     }
 
-    public static bool Load(string path = "partTimes.json")
+    public static bool Load(string path = "Restaurant.json")
     {
-        try
+        if (!File.Exists(path))
         {
-            if (!File.Exists(path))
-            {
-                _Restaurantextent.Clear();
-                return false;
-            }
-            string jsonString = File.ReadAllText(path);
-            _Restaurantextent = JsonSerializer.Deserialize<List<Restaurant>>(jsonString);
-            return true;
-        }
-        catch (Exception)
-        {
-            _Restaurantextent.Clear();
+            _extent.Clear();
             return false;
         }
-    }
 
+        var jsonString = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<List<Restaurant>>(jsonString);
+
+        _extent.Clear();
+        _extent.AddRange(loaded ?? new List<Restaurant>());
+
+        return true;
+    }
 }
