@@ -129,6 +129,27 @@ public class Restaurant
 
         return new Table(tableId, number,this);
     }
+    
+    internal void AddTableToCollection(Table table)
+    {
+        if (table == null)
+            throw new ArgumentNullException(nameof(table));
+
+        // prevent duplicates in this restaurant
+        if (_tables.Any(t => t.TableId == table.TableId))
+            throw new ArgumentException(
+                $"Table {table.TableId} already exists in restaurant {RestaurantId}");
+
+        _tables.Add(table);
+    }
+
+    internal void RemoveTableFromCollection(Table table)
+    {
+        if (table == null)
+            return;
+
+        _tables.Remove(table);
+    }
 
     // ----- DELETION -----
 
