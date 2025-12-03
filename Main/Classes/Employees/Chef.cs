@@ -19,8 +19,8 @@ public class Chef : Staff
     }
 
 
-    public Chef(string firstName, string lastName, decimal salary, string department)
-        : base(firstName, lastName, salary, department)
+    public Chef(int staffId,string firstName, string lastName, decimal salary, string department)
+        : base(staffId,firstName, lastName, salary, department)
     {
         AddToExtent(this);
     }

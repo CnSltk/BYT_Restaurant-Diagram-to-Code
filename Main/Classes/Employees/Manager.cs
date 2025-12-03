@@ -1,30 +1,81 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
-using Main.Classes.Employees;
+using System.Text.Json.Serialization;
+
+namespace Main.Classes.Employees;
 
 [Serializable]
 public class Manager : Staff
 {
-    private static List<Manager> _managerExtent = new List<Manager>();
+    private static readonly List<Manager> _managerExtent = new();
+    
+    private readonly List<Staff> _managedStaff = new();
+    public IReadOnlyCollection<Staff> ManagedStaff => _managedStaff.AsReadOnly();
+    
+    public ManagerLevels Level { get; set; }
+
+    public Manager(int staffId, string firstName, string lastName, decimal salary, string department, ManagerLevels level)
+        : base(staffId, firstName, lastName, salary, department)
+    {
+        Level = level;
+        AddToExtent(this);
+    }
 
     private static void AddToExtent(Manager manager)
     {
         if (manager == null)
-            throw new ArgumentException("Manager cannot be null.");
+            throw new ArgumentNullException(nameof(manager));
+        
+        if (_managerExtent.Any(m => m.StaffId == manager.StaffId))
+            throw new ArgumentException($"Manager with ID {manager.StaffId} already exists");
+            
         _managerExtent.Add(manager);
     }
 
-    public static IReadOnlyList<Manager> GetExtent()
-    {
-        return _managerExtent.AsReadOnly();
-    }
-    
-    public ManagerLevels Level { get; set; }
+    public static IReadOnlyCollection<Manager> GetExtent() => _managerExtent.AsReadOnly();
+    public static void ClearExtentForTests() => _managerExtent.Clear();
 
-    public Manager(string firstName, string lastName, decimal salary, string department, ManagerLevels level)
-        : base(firstName, lastName, salary, department)
+    public void AddManagedStaff(Staff staff)
     {
-        Level = level;
-        AddToExtent(this);
+        if (staff == null)
+            throw new ArgumentNullException(nameof(staff));
+        
+        if (staff == this)
+            throw new InvalidOperationException("Manager cannot manage themselves");
+        
+        if (_managedStaff.Contains(staff))
+            throw new ArgumentException($"{staff.LastName} is already managed by {LastName}");
+        
+        if (staff is Manager managerStaff && managerStaff.Level > this.Level)
+        {
+            throw new InvalidOperationException(
+                $"{LastName} (Level {Level}) cannot manage {managerStaff.LastName} (Level {managerStaff.Level})");
+        }
+        
+        if (staff.Manager != null && staff.Manager != this)
+        {
+            staff.Manager.RemoveManagedStaffInternal(staff);
+        }
+        
+        _managedStaff.Add(staff);
+        staff.AssignManager(this); 
+    }
+
+    public bool RemoveManagedStaff(Staff staff)
+    {
+        if (staff == null || !_managedStaff.Contains(staff))
+            return false;
+        
+        _managedStaff.Remove(staff);
+        staff.RemoveManager();  
+        return true;
+    }
+
+    internal void RemoveManagedStaffInternal(Staff staff)
+    {
+        _managedStaff.Remove(staff);
     }
 
     public override void hireStaff()
@@ -36,7 +87,6 @@ public class Manager : Staff
     {
         Console.WriteLine($"Manager {LastName} is firing staff.");
     }
-    
 
     public void ManageEmployee()
     {
@@ -52,7 +102,12 @@ public class Manager : Staff
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(_managerExtent, new JsonSerializerOptions { WriteIndented = true });
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve 
+            };
+            string jsonString = JsonSerializer.Serialize(_managerExtent, options);
             File.WriteAllText(path, jsonString);
         }
         catch (Exception ex)
@@ -70,13 +125,23 @@ public class Manager : Staff
                 _managerExtent.Clear();
                 return false;
             }
+            
             string jsonString = File.ReadAllText(path);
-            _managerExtent = JsonSerializer.Deserialize<List<Manager>>(jsonString);
+            var loadedList = JsonSerializer.Deserialize<List<Manager>>(jsonString, 
+                new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve });
+            
+            _managerExtent.Clear();
+            if (loadedList != null)
+            {
+                _managerExtent.AddRange(loadedList);
+            }
+            
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             _managerExtent.Clear();
+            Console.WriteLine($"Failed to load managers: {ex.Message}");
             return false;
         }
     }

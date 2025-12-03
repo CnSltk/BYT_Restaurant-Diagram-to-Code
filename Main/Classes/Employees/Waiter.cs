@@ -38,8 +38,8 @@ public class Waiter : Staff
     }
 
 
-    public Waiter(string firstName, string lastName, decimal salary, string department, int tables)
-        : base(firstName, lastName, salary, department)
+    public Waiter(int staffId,string firstName, string lastName, decimal salary, string department, int tables)
+        : base(staffId,firstName, lastName, salary, department)
     {
         Tables = tables;
         AddToExtent(this);

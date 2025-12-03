@@ -26,8 +26,8 @@ public class FullTime : Staff
     }
     public Shift Shift { get; private set; }
 
-    public FullTime(string firstName, string lastName, decimal salary, string department, Shift shift)
-        : base(firstName, lastName, salary, department)
+    public FullTime(int staffId,string firstName, string lastName, decimal salary, string department, Shift shift)
+        : base(staffId, firstName, lastName, salary, department)
     {
         Shift = shift;
     }

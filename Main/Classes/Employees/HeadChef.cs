@@ -20,8 +20,8 @@ public class HeadChef : Chef
 
     public SignatureDish Dish { get; set; }
 
-    public HeadChef(string firstName, string lastName, decimal salary, string department, SignatureDish dish)
-        : base(firstName, lastName, salary, department)
+    public HeadChef(int staffId,string firstName, string lastName, decimal salary, string department, SignatureDish dish)
+        : base(staffId,firstName, lastName, salary, department)
     {
         Dish = dish;
         AddToExtent(this);

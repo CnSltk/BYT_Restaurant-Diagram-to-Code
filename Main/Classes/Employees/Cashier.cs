@@ -20,8 +20,8 @@ public class Cashier : Staff
         return _cashierExtent.AsReadOnly();
     }
 
-    public Cashier(string firstName, string lastName, decimal salary, string department)
-        : base(firstName, lastName, salary, department)
+    public Cashier(int staffId,string firstName, string lastName, decimal salary, string department)
+        : base(staffId,firstName, lastName, salary, department)
     {
         AddToExtent(this);
     }

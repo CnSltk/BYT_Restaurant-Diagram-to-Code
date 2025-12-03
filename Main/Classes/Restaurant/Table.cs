@@ -28,18 +28,15 @@ public class Table
         set => _isOccupied = value;
     }
 
-    // 1. DIRECT OBJECT REFERENCE (not ID)
     private Restaurant _restaurant;
     public Restaurant Restaurant
     {
         get => _restaurant;
-        private set => _restaurant = value; // Private setter
+        private set => _restaurant = value; 
     }
 
-    // EXTENT: Using List with manual duplicate check
     private static readonly List<Table> _extent = new();
 
-    // Constructor establishes composition
     public Table(int tableId, int number, Restaurant restaurant)
     {
         if(tableId <= 0)
@@ -50,7 +47,6 @@ public class Table
         TableId = tableId;
         Number = number;
         
-        // 2. ESTABLISH REVERSE CONNECTION
         SetRestaurant(restaurant);
         AddToExtent(this);
     }
@@ -60,30 +56,26 @@ public class Table
         if(table == null)
             throw new ArgumentNullException(nameof(table));
         
-        // MANUAL DUPLICATE CHECK (HashSet does this automatically)
         if (_extent.Any(t => t.TableId == table.TableId))
             throw new ArgumentException($"Table with ID {table.TableId} already exists");
             
         _extent.Add(table);
     }
 
-    // Internal method for reverse connection management
     internal void SetRestaurant(Restaurant restaurant)
     {
         if (restaurant == null)
             throw new ArgumentNullException(nameof(restaurant));
         
-        // Remove from old restaurant if reassigning
         if (_restaurant != null && _restaurant != restaurant)
         {
             _restaurant.RemoveTableFromCollection(this);
         }
         
         _restaurant = restaurant;
-        restaurant.AddTableToCollection(this); // Reverse connection
+        restaurant.AddTableToCollection(this); 
     }
 
-    // Return defensive copy
     public static IReadOnlyCollection<Table> GetExtent() => _extent.AsReadOnly();
     
     public static IReadOnlyCollection<Table> GetByRestaurant(Restaurant restaurant)
@@ -95,6 +87,5 @@ public class Table
 
     public static void ClearExtentForTests() => _extent.Clear();
     
-    // For cascade delete
     internal static void RemoveFromExtent(Table table) => _extent.Remove(table);
 }

@@ -46,8 +46,8 @@ public class PartTime : Staff
     }
     public decimal WeeklySalary => Hours * HourlyRate;
 
-    public PartTime(string firstName, string lastName, string department, int hours, decimal hourlyRate)
-        : base(firstName, lastName,0m ,department)
+    public PartTime(int staffId,string firstName, string lastName, string department, int hours, decimal hourlyRate)
+        : base(staffId,firstName, lastName,0m ,department)
     {
         Hours = hours;
         HourlyRate = hourlyRate;

@@ -10,26 +10,26 @@ public class PartFullTimeTests
     public void Constructor_WithNonPositiveHours_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            new PartTime("Can", "Saltik", "Kitchen", 0, 10m));
+            new PartTime(1,"Can", "Saltik", "Kitchen", 0, 10m));
 
         Assert.Throws<ArgumentException>(() =>
-            new PartTime("Can", "Saltik", "Kitchen", -5, 10m));
+            new PartTime(2,"Can", "Saltik", "Kitchen", -5, 10m));
     }
 
     [Test]
     public void Constructor_WithNonPositiveHourlyRate_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            new PartTime("Arda", "Yesil", "Service", 10, 0m));
+            new PartTime(3,"Arda", "Yesil", "Service", 10, 0m));
 
         Assert.Throws<ArgumentException>(() =>
-            new PartTime("Arda", "Yesil", "Service", 10, -1m));
+            new PartTime(4,"Arda", "Yesil", "Service", 10, -1m));
     }
 
     [Test]
     public void WeeklySalary_ReflectsChanges_WhenBothValuesChange()
     {
-        var pt = new PartTime("Arda", "Yesil", "Service", 10, 20m);
+        var pt = new PartTime(5,"Arda", "Yesil", "Service", 10, 20m);
         Assert.That(pt.WeeklySalary, Is.EqualTo(200m));
 
         pt.Hours = 15;
@@ -43,7 +43,7 @@ public class PartFullTimeTests
     [Test]
     public void Constructor_AssignsPropertiesCorrectly()
     {
-        var ft = new FullTime("Melisa", "Arslan", 4000m, "Service", Shift.Evening);
+        var ft = new FullTime(6,"Melisa", "Arslan", 4000m, "Service", Shift.Evening);
 
         Assert.That(ft.FirstName, Is.EqualTo("Melisa"));
         Assert.That(ft.LastName, Is.EqualTo("Arslan"));
@@ -55,7 +55,7 @@ public class PartFullTimeTests
     [Test]
     public void ShiftChange_CanSetSameShiftWithoutError()
     {
-        var ft = new FullTime("Derya", "Ogus", 5000m, "Cashier", Shift.Morning);
+        var ft = new FullTime(7,"Derya", "Ogus", 5000m, "Cashier", Shift.Morning);
 
         // Changing to the same shift should be harmless
         ft.ShiftChange(Shift.Morning);
@@ -66,7 +66,7 @@ public class PartFullTimeTests
     [Test]
     public void WeeklySalary_ComputedCorrectly_AndSynced()
     {
-        var pt = new PartTime("Can", "Saltik", "Chef", hours: 20, hourlyRate: 15m);
+        var pt = new PartTime(8,"Can", "Saltik", "Chef", hours: 20, hourlyRate: 15m);
 
         Assert.That(pt.WeeklySalary, Is.EqualTo(300m));
         Assert.That(pt.Salary, Is.EqualTo(300m));
@@ -83,7 +83,7 @@ public class PartFullTimeTests
     [Test]
     public void Setting_NonPositiveHours_Throws()
     {
-        var pt = new PartTime("Ibrahim", "Yesil", "Waiter", 10, 10m);
+        var pt = new PartTime(9,"Ibrahim", "Yesil", "Waiter", 10, 10m);
 
         Assert.Throws<ArgumentException>(() => pt.Hours = 0);
         Assert.Throws<ArgumentException>(() => pt.Hours = -5);
@@ -92,7 +92,7 @@ public class PartFullTimeTests
     [Test]
     public void Setting_NonPositiveHourlyRate_Throws()
     {
-        var pt = new PartTime("Arda", "Seydol", "Manager", 10, 10m);
+        var pt = new PartTime(0,"Arda", "Seydol", "Manager", 10, 10m);
 
         Assert.Throws<ArgumentException>(() => pt.HourlyRate = 0m);
         Assert.Throws<ArgumentException>(() => pt.HourlyRate = -1m);

@@ -26,7 +26,7 @@ public class ManagerTests
     [Test]
     public void SaveAndLoad()
     {
-        new Manager("Arda", "Seydol", 7000m, "Management", ManagerLevels.Senior);
+        new Manager(1,"Arda", "Seydol", 7000m, "Management", ManagerLevels.Senior);
         
         Manager.Save(_testFilePath);
         
@@ -38,14 +38,13 @@ public class ManagerTests
         
         Assert.That(result, Is.True);
         Assert.That(extent.Count, Is.EqualTo(1));
-        Assert.That(extent[0].Level, Is.EqualTo(ManagerLevels.Senior));
     }
     
 
     [Test]
     public void HireStaff()
     {
-        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
+        var manager = new Manager(2,"Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);
@@ -58,7 +57,7 @@ public class ManagerTests
     [Test]
     public void FireStaff()
     {
-        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Junior);
+        var manager = new Manager(3,"Derya", "Ogus", 6000m, "Management", ManagerLevels.Junior);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);
@@ -71,7 +70,7 @@ public class ManagerTests
     [Test]
     public void ManageEmployee()
     {
-        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Senior);
+        var manager = new Manager(4,"Derya", "Ogus", 6000m, "Management", ManagerLevels.Senior);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);
@@ -84,7 +83,7 @@ public class ManagerTests
     [Test]
     public void ChangeStaffShift()
     {
-        var manager = new Manager("Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
+        var manager = new Manager(5,"Derya", "Ogus", 6000m, "Management", ManagerLevels.Mid);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);

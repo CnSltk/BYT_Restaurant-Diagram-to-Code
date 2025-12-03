@@ -51,7 +51,7 @@ public class MenuTests
     [Test]
     public void ShiftChange_UpdatesShiftCorrectly()
     {
-        var ft = new FullTime("Derya", "Ogus", 5000m, "Cashier", Shift.Morning);
+        var ft = new FullTime(1,"Derya", "Ogus", 5000m, "Cashier", Shift.Morning);
 
         Assert.That(ft.Shift, Is.EqualTo(Shift.Morning));
 

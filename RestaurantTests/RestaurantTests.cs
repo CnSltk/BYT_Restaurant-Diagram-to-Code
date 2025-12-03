@@ -239,8 +239,8 @@ public class EmployeeStaffTests
 {
     public class TestableStaff : Staff
     {
-        public TestableStaff(string firstName, string lastName, decimal salary, string department)
-            : base(firstName, lastName, salary, department)
+        public TestableStaff(int staffId, string firstName, string lastName, decimal salary, string department)
+            : base(staffId, firstName, lastName, salary, department)
         {
         }
 
@@ -251,7 +251,7 @@ public class EmployeeStaffTests
     [Test]
     public void Constructor_ValidValues_AssignedCorrectly()
     {
-        var staff = new TestableStaff("Derya", "Ogus", 50000, "IT");
+        var staff = new TestableStaff(1,"Derya", "Ogus", 50000, "IT");
 
         Assert.That(staff.FirstName, Is.EqualTo("Derya"));
         Assert.That(staff.LastName, Is.EqualTo("Ogus"));
@@ -263,7 +263,7 @@ public class EmployeeStaffTests
     public void Constructor_NullFirstName_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
-            new TestableStaff(null, "Ogus", 50000, "IT")
+            new TestableStaff(1,null, "Ogus", 50000, "IT")
         );
 
         Assert.That(ex.Message, Is.EqualTo("First name cannot be empty"));
@@ -273,7 +273,7 @@ public class EmployeeStaffTests
     public void Constructor_EmptyFirstName_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
-            new TestableStaff("", "Ogus", 50000, "IT")
+            new TestableStaff(1,"", "Ogus", 50000, "IT")
         );
 
         Assert.That(ex.Message, Is.EqualTo("First name cannot be empty"));
@@ -503,13 +503,13 @@ public class ChefTests
     [Test]
     public void Constructor_InvalidFirstName()
     {
-        Assert.Throws<ArgumentException>(() => new Chef("", "Ramsay", 5000m, "Kitchen"));
+        Assert.Throws<ArgumentException>(() => new Chef(1,"", "Ramsay", 5000m, "Kitchen"));
     }
 
     [Test]
     public void SaveAndLoad()
     {
-        new Chef("Marco", "Pierre", 5500m, "Kitchen");
+        new Chef(2,"Marco", "Pierre", 5500m, "Kitchen");
         
         Chef.Save(_testFilePath);
         var extentField = typeof(Chef).GetField("_chefExtent");
@@ -526,7 +526,7 @@ public class ChefTests
     [Test]
     public void HireStaff()
     {
-        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        var chef = new Chef(3,"Gordon", "Ramsay", 5000m, "Kitchen");
         
         Assert.Throws<NotImplementedException>(() => chef.hireStaff());
     }
@@ -534,7 +534,7 @@ public class ChefTests
     [Test]
     public void FireStaff()
     {
-        var chef = new Chef("Gordon", "Ramsay", 5000m, "Kitchen");
+        var chef = new Chef(4,"Gordon", "Ramsay", 5000m, "Kitchen");
         
         Assert.Throws<NotImplementedException>(() => chef.fireStaff());
     }
@@ -569,7 +569,7 @@ public class HeadChefTests
     [Test]
     public void ManageInventory()
     {
-        var headChef = new HeadChef("Ibrahim", "Yesil", 8000m, "Kitchen", SignatureDish.FishTaco);
+        var headChef = new HeadChef(5,"Ibrahim", "Yesil", 8000m, "Kitchen", SignatureDish.FishTaco);
         
         using var consoleOutput = new StringWriter();
         Console.SetOut(consoleOutput);
@@ -582,7 +582,7 @@ public class HeadChefTests
     [Test]
     public void SaveAndLoad()
     {
-        new HeadChef("Arda", "Seydol", 9000m, "Kitchen", SignatureDish.Stew);
+        new HeadChef(6,"Arda", "Seydol", 9000m, "Kitchen", SignatureDish.Stew);
         
         HeadChef.Save(_testFilePath);
         
@@ -624,13 +624,13 @@ public class WaiterTests
     [Test]
     public void Constructor_NegativeTables()
     {
-        Assert.Throws<ArgumentException>(() => new Waiter("Rachel", "Green", 2500m, "Front", -1));
+        Assert.Throws<ArgumentException>(() => new Waiter(1,"Rachel", "Green", 2500m, "Front", -1));
     }
 
     [Test]
     public void Tables_Setter_WithNegativeValue()
     {
-        var waiter = new Waiter("Rachel", "Green", 2500m, "Front", 3);
+        var waiter = new Waiter(1,"Rachel", "Green", 2500m, "Front", 3);
         
         Assert.Throws<ArgumentException>(() => waiter.Tables = -5);
     }
@@ -640,7 +640,7 @@ public class WaiterTests
     [Test]
     public void SaveAndLoad()
     {
-        new Waiter("Monica", "Geller", 2600m, "Front", 4);
+        new Waiter(1,"Monica", "Geller", 2600m, "Front", 4);
         
         Waiter.Save(_testFilePath);
         
