@@ -1,50 +1,120 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Main.Classes.Orders;
-
-namespace Main.Classes.Menu;
-
+ 
+namespace Menu;
+ 
 [Serializable]
 public abstract class MenuItems
 {
     private static List<MenuItems> _extent = new();
     public static IReadOnlyList<MenuItems> Extent => _extent.AsReadOnly();
-
+ 
     private static int _nextId = 1;
-
+ 
     public int ItemId { get; }
-
+ 
     private string _name = string.Empty;
     private decimal _price;
     private bool _isAvailable;
     private string? _description;
-
+ 
     public List<string> Allergens { get; set; } = new();
-
+ 
     // ============================
-    // ASSOCIATION: MenuItems → Quantity (*)
+    // QUANTITY ASSOCIATION
     // ============================
-
+ 
     private List<Quantity> _quantities = new();
     public IReadOnlyList<Quantity> Quantities => _quantities.AsReadOnly();
-
+ 
+    internal void AddQuantityInternal(Quantity q)
+    {
+        if (!_quantities.Contains(q))
+            _quantities.Add(q);
+    }
+ 
     public void AddQuantity(Quantity q)
     {
         if (q == null)
             throw new ArgumentException("Quantity cannot be null.");
-
-        if (!_quantities.Contains(q))
-            _quantities.Add(q);
-
-        // Check consistency
+ 
+        if (_quantities.Contains(q))
+            throw new InvalidOperationException("Quantity already added to this MenuItem.");
+ 
         if (q.Item != this)
             throw new InvalidOperationException("Quantity belongs to a different MenuItem.");
+ 
+        _quantities.Add(q);
+ 
+        if (!q.Order.Quantities.Contains(q))
+            q.Order.AddQuantity(q);
     }
-
+ 
+    // ============================
+    // MENU ASSOCIATION (1..*)
+    // ============================
+ 
+    private List<Menu> _menus = new();
+    public IReadOnlyList<Menu> Menus => _menus.AsReadOnly();
+ 
+    internal void AddMenuInternal(Menu menu)
+    {
+        if (!_menus.Contains(menu))
+            _menus.Add(menu);
+    }
+ 
+    internal void RemoveMenuInternal(Menu menu)
+    {
+        if (_menus.Contains(menu))
+            _menus.Remove(menu);
+    }
+ 
+    public void AddMenu(Menu menu)
+    {
+        if (menu == null)
+            throw new ArgumentException("Menu cannot be null.");
+ 
+        if (_menus.Contains(menu))
+            throw new InvalidOperationException("Menu already linked to this MenuItem.");
+ 
+        _menus.Add(menu);
+ 
+        if (!menu.Items.Contains(this))
+            menu.AddMenuItem(this);
+    }
+ 
+    // ============================
+    // INGREDIENT AGGREGATION  (1..* —— 1..*)
+    // ============================
+ 
+    private List<Ingredient> _ingredients = new();
+    public IReadOnlyList<Ingredient> Ingredients => _ingredients.AsReadOnly();
+ 
+    internal void AddIngredientInternal(Ingredient ing)
+    {
+        if (!_ingredients.Contains(ing))
+            _ingredients.Add(ing);
+    }
+ 
+    public void AddIngredient(Ingredient ing)
+    {
+        if (ing == null)
+            throw new ArgumentException("Ingredient cannot be null.");
+ 
+        if (_ingredients.Contains(ing))
+            throw new InvalidOperationException("Ingredient already added to this MenuItem.");
+ 
+        _ingredients.Add(ing);
+ 
+        if (!ing.MenuItems.Contains(this))
+            ing.AddMenuItemInternal(this);
+    }
+ 
     // ============================
     // ATTRIBUTES
     // ============================
-
+ 
     public string Name
     {
         get => _name;
@@ -57,7 +127,7 @@ public abstract class MenuItems
             _name = value.Trim();
         }
     }
-
+ 
     public decimal Price
     {
         get => _price;
@@ -68,13 +138,13 @@ public abstract class MenuItems
             _price = Math.Round(value, 2);
         }
     }
-
+ 
     public bool IsAvailable
     {
         get => _isAvailable;
         set => _isAvailable = value;
     }
-
+ 
     public string? Description
     {
         get => _description;
@@ -86,7 +156,7 @@ public abstract class MenuItems
                     throw new ArgumentException("Description cannot be blank");
                 if (value.Length > 200)
                     throw new ArgumentException("Description is too long");
-
+ 
                 _description = value.Trim();
             }
             else
@@ -95,32 +165,32 @@ public abstract class MenuItems
             }
         }
     }
-
+ 
     // ============================
     // CONSTRUCTOR
     // ============================
-
+ 
     protected MenuItems(string name, decimal price, bool isAvailable, string? description = null)
     {
         ItemId = _nextId++;
-
+ 
         Name = name;
         Price = price;
         IsAvailable = isAvailable;
         Description = description;
-
+ 
         AddToExtent(this);
     }
-
+ 
     private static void AddToExtent(MenuItems item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
         _extent.Add(item);
     }
-
+ 
     public static void ClearExtent() => _extent.Clear();
-
+ 
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,
                                        bool? isAvailable = null, string? description = null)
     {

@@ -1,4 +1,4 @@
-using Main.Classes.Menu;
+using Menu;
 namespace Main.Classes.Orders;
 
 public class Quantity

@@ -1,5 +1,5 @@
 ﻿using Main.Classes.Employees;
-using Main.Classes.Menu;
+using Menu;
 
 namespace RestaurantTests;
 
