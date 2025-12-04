@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Main.Classes.Employees;
 using Menu;            // ← THIS IS THE CORRECT NAMESPACE
 
 namespace Main.Classes.Restaurant;
@@ -36,6 +37,12 @@ public class Restaurant
             _openingHour = value.Trim();
         }
     }
+
+    private readonly List<HireDate> _hireDates = new();
+    public IReadOnlyCollection<HireDate> HireDates => _hireDates.AsReadOnly();
+
+    private readonly List<ShiftAssociation> _shiftAssociations = new();
+    public IReadOnlyCollection<ShiftAssociation> ShiftAssociations => _shiftAssociations.AsReadOnly();
 
     // ----- TABLES -----
     internal readonly List<Table> _tables = new();
@@ -119,6 +126,30 @@ public class Restaurant
 
         return true;
     }
+    
+    internal void AddHireDate(HireDate hireDate)
+    {
+        if (hireDate == null) throw new ArgumentNullException(nameof(hireDate));
+        _hireDates.Add(hireDate);
+    }
+    
+    internal void RemoveHireDate(HireDate hireDate)
+    {
+        _hireDates.Remove(hireDate);
+    }
+
+    // ✅ SHIFT ASSOCIATION METHODS
+    internal void AddShiftAssociation(ShiftAssociation association)
+    {
+        if (association == null) throw new ArgumentNullException(nameof(association));
+        _shiftAssociations.Add(association);
+    }
+    
+    internal void RemoveShiftAssociation(ShiftAssociation association)
+    {
+        _shiftAssociations.Remove(association);
+    }
+
 
     // ----- TABLES -----
 

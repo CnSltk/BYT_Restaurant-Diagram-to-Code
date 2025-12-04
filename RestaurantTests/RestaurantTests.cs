@@ -223,6 +223,7 @@ public class IngredientTests
     public void Ingredient_ValidValues_AssignedCorrectly()
     {
         var ingredient = new Ingredient(
+            ingredientId: 1,
             name: "Tomato",
             unit: Unit.Gram
         );
