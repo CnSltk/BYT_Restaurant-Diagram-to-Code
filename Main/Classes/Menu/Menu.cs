@@ -1,5 +1,6 @@
 using System.Text.Json;
- 
+using Main.Classes.Restaurant;
+
 namespace Menu;
  
 [Serializable]
@@ -7,6 +8,7 @@ public class Menu
 {
     private string _name = string.Empty;
     private string _version = string.Empty;
+    private Restaurant _restaurant;
  
     public int MenuId { get; }
  
@@ -49,12 +51,13 @@ public class Menu
     private List<MenuItems> _items = new();
     public IReadOnlyList<MenuItems> Items => _items.AsReadOnly();
  
-    public Menu(int menuId, string name, string version, bool isActive)
+    public Menu(int menuId, string name, string version, bool isActive, Restaurant restaurant)
     {
         MenuId = menuId;
         Name = name;
         Version = version;
         IsActive = isActive;
+        _restaurant = restaurant;
  
         AddToExtent(this);
     }

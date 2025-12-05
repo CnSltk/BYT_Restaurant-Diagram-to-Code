@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Main.Classes.Employees;
-using Menu;            // ← THIS IS THE CORRECT NAMESPACE
+using Menu;           
 
 namespace Main.Classes.Restaurant;
 
@@ -94,7 +94,7 @@ public class Restaurant
         if (_menus.ContainsKey(key))
             throw new ArgumentException($"Menu '{key}' already exists.");
 
-        var menu = new global::Menu.Menu(menuId, key, version, isActive);
+        var menu = new global::Menu.Menu(menuId, key, version, isActive, this);
         _menus.Add(key, menu);
 
         return menu;
@@ -180,6 +180,17 @@ public class Restaurant
             return;
 
         _tables.Remove(table);
+    }
+    public bool RemoveTable(Table table)
+    {
+        if (table == null || !_tables.Contains(table))
+            return false;
+
+        table.SetRestaurant(null);
+    
+        Table.RemoveFromExtent(table);
+    
+        return true;
     }
 
     // ----- DELETION -----
