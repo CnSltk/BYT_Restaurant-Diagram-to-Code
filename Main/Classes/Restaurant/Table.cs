@@ -64,16 +64,17 @@ public class Table
 
     internal void SetRestaurant(Restaurant restaurant)
     {
-        if (restaurant == null)
-            throw new ArgumentNullException(nameof(restaurant));
-        
         if (_restaurant != null && _restaurant != restaurant)
         {
-            _restaurant.RemoveTableFromCollection(this);
+            _restaurant._tables.Remove(this);
         }
-        
+    
+        if (restaurant != null)
+        {
+            restaurant._tables.Add(this); 
+        }
+    
         _restaurant = restaurant;
-        restaurant.AddTableToCollection(this); 
     }
 
     public static IReadOnlyCollection<Table> GetExtent() => _extent.AsReadOnly();

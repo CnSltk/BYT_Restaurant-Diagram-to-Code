@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Main.Classes.Employees;
-using Menu;            // ← THIS IS THE CORRECT NAMESPACE
+using Menu;           
 
 namespace Main.Classes.Restaurant;
 
@@ -180,6 +180,17 @@ public class Restaurant
             return;
 
         _tables.Remove(table);
+    }
+    public bool RemoveTable(Table table)
+    {
+        if (table == null || !_tables.Contains(table))
+            return false;
+
+        table.SetRestaurant(null);
+    
+        Table.RemoveFromExtent(table);
+    
+        return true;
     }
 
     // ----- DELETION -----

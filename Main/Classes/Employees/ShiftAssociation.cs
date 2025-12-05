@@ -36,7 +36,7 @@ public class ShiftAssociation
 
     public void ChangeShift(ShiftType newShift) => ChangedShift = newShift;
 
-    internal void Remove()
+    public void Remove()
     {
         _staff.RemoveShiftAssociation(this);
         _restaurant.RemoveShiftAssociation(this);
