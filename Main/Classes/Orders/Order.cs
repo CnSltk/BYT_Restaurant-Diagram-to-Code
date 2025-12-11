@@ -17,6 +17,10 @@ public class Order
         if (!_extent.Contains(order))
             _extent.Add(order);
     }
+    public static void ClearExtentForTests()
+    {
+        _extent.Clear();
+    }
  
     public static decimal MinPrice { get; } = 30m;
  
@@ -101,23 +105,30 @@ public class Order
  
     private List<Quantity> _quantities = new();
     public IReadOnlyList<Quantity> Quantities => _quantities.AsReadOnly();
+    internal void AddQuantityInternal(Quantity q)
+    {
+        if (!_quantities.Contains(q))
+            _quantities.Add(q);
+    }
+
  
     public void AddQuantity(Quantity q)
     {
         if (q == null)
             throw new ArgumentException("Quantity cannot be null.");
- 
+
         if (_quantities.Contains(q))
             throw new InvalidOperationException("Quantity already added to this Order.");
- 
+
         if (q.Order != this)
             throw new InvalidOperationException("Quantity belongs to a different Order.");
- 
+
         _quantities.Add(q);
- 
+
         if (!q.Item.Quantities.Contains(q))
             q.Item.AddQuantityInternal(q);
     }
+
  
     public void RemoveQuantity(Quantity q)
     {

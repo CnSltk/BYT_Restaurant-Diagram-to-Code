@@ -16,6 +16,11 @@
             if (!_extent.Contains(d))
                 _extent.Add(d);
         }
+        
+        public static void ClearExtentForTests()
+        {
+            _extent.Clear();
+        }
 
         public static void SaveExtent(string path = "delivery.json")
         {

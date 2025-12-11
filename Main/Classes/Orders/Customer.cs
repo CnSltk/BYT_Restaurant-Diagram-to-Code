@@ -16,6 +16,10 @@ public class Customer
         if (!_extent.Contains(c))
             _extent.Add(c);
     }
+    public static void ClearExtentForTests()
+    {
+        _extent.Clear();
+    }
 
     public static void SaveExtent(string path = "customer.json")
     {

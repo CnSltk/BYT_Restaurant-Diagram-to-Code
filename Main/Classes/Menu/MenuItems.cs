@@ -38,18 +38,20 @@ public abstract class MenuItems
     {
         if (q == null)
             throw new ArgumentException("Quantity cannot be null.");
- 
+
         if (_quantities.Contains(q))
             throw new InvalidOperationException("Quantity already added to this MenuItem.");
- 
+
         if (q.Item != this)
             throw new InvalidOperationException("Quantity belongs to a different MenuItem.");
- 
+
         _quantities.Add(q);
- 
+
+        // only add one-way to prevent recursion and duplication
         if (!q.Order.Quantities.Contains(q))
-            q.Order.AddQuantity(q);
+            q.Order.AddQuantityInternal(q);
     }
+
  
     // ============================
     // MENU ASSOCIATION (1..*)
@@ -189,7 +191,12 @@ public abstract class MenuItems
         _extent.Add(item);
     }
  
-    public static void ClearExtent() => _extent.Clear();
+    public static void ClearExtentForTests()
+    {
+        _extent.Clear();
+        _nextId = 1; 
+    }
+
  
     public virtual void UpdateMenuItem(string? name = null, decimal? price = null,
                                        bool? isAvailable = null, string? description = null)

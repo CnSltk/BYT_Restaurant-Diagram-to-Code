@@ -16,6 +16,10 @@ public class Payment
         if (!_extent.Contains(payment))
             _extent.Add(payment);
     }
+    public static void ClearExtentForTests()
+    {
+        _extent.Clear();
+    }
 
     public static void SaveExtent(string path = "payments.json")
     {

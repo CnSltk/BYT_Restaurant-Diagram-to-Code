@@ -1,4 +1,6 @@
+using Main.Classes.Orders;
 using Main.Classes.Restaurant;
+using Menu;
 
 namespace RestaurantTests;
 using NUnit.Framework;
@@ -105,7 +107,6 @@ public class AssociationTests
             var restaurant = new Restaurant(1, "Bella Vista", "11:00-22:00");
             var staff = new Manager(1, "Alice", "Smith", 70000, "Kitchen", ManagerLevels.Senior);
             
-            // Create multiple shift associations (Bag allows this)
             var shift1 = ShiftAssociation.Create(staff, restaurant, ShiftType.Morning);
             var shift2 = ShiftAssociation.Create(staff, restaurant, ShiftType.Evening);
             var shift3 = ShiftAssociation.Create(staff, restaurant, ShiftType.Night);
@@ -261,4 +262,317 @@ public class AssociationTests
             Assert.That(ex.Message, Does.Contain("already exists"));
         }
     }
+    
+public class TestMenuItem : MenuItems
+{
+    public TestMenuItem(string name, decimal price, bool isAvailable, string? desc = null)
+        : base(name, price, isAvailable, desc) { }
+}
+
+// ============================================
+// CUSTOMER TESTS
+// ============================================
+[TestFixture]
+public class CustomerTests
+{
+    [SetUp]
+    public void Setup()
+    {
+        Customer.ClearExtentForTests();
+    }
+
+    [Test]
+    public void AddOrder_CreatesReverseConnection()
+    {
+        var c = new Customer(1, "Ibrahim", "Yesil", "123456", "x@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        Assert.That(c.Orders.Contains(o), Is.True);
+        Assert.That(o.Customer, Is.EqualTo(c));
+    }
+
+    [Test]
+    public void Customer_CannotAddDuplicateOrder()
+    {
+        var c = new Customer(1, "Ibrahim", "Yesil", "123456", "x@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        c.AddOrder(o);
+
+        Assert.That(c.Orders.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void InvalidName_Throws()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Customer(1, "", "Yesil", "123456", "a@a.com"));
+    }
+
+    [Test]
+    public void InvalidEmail_Throws()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Customer(1, "Ibrahim", "Yesil", "111111", "invalid"));
+    }
+}
+
+// ============================================
+// ORDER TESTS
+// ============================================
+[TestFixture]
+public class OrderTests
+{
+    [SetUp]
+    public void Setup()
+    {
+        Order.ClearExtentForTests();
+    }
+
+    [Test]
+    public void Order_AssociationCreatesReverse()
+    {
+        var c = new Customer(1, "Ibrahim", "Yesil", "123", "x@x.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        Assert.That(c.Orders.Contains(o), Is.True);
+    }
+
+    [Test]
+    public void AddPayment_CreatesBidirectional()
+    {
+        var c = new Customer(1, "Test", "User", "123", "mail@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var p = new Payment(20, DateTime.Now, 1, PaymentMethod.Cash, PaymentStatus.Pending, null, o);
+
+        Assert.That(o.Payments.Contains(p), Is.True);
+        Assert.That(p.Order, Is.EqualTo(o));
+    }
+
+    [Test]
+    public void RemoveLastQuantity_Throws()
+    {
+        var c = new Customer(1, "A", "B", "111111", "a@a.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var item = new TestMenuItem("Pizza", 20, true);
+        var q = new Quantity(o, item, 1);
+
+        Assert.Throws<InvalidOperationException>(() => o.RemoveQuantity(q));
+    }
+
+    [Test]
+    public void AddQuantity_IfQuantityBelongsToDifferentOrder_Throws()
+    {
+        var c = new Customer(1, "Test", "User", "111111", "x@mail.com");
+        var o1 = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+        var o2 = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var item = new TestMenuItem("Soup", 10, true);
+
+        Assert.Throws<InvalidOperationException>(() => new Quantity(o2, item, 1));
+    }
+}
+
+// ============================================
+// PAYMENT TESTS
+// ============================================
+[TestFixture]
+public class PaymentTests
+{
+    [Test]
+    public void Pay_SetsStatusAndPaidAt()
+    {
+        var c = new Customer(1, "Ibrahim", "Yesil", "123", "a@a.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var p = new Payment(30, DateTime.Now, 1, PaymentMethod.Card, PaymentStatus.Pending, null, o);
+
+        p.Pay();
+
+        Assert.That(p.Status, Is.EqualTo(PaymentStatus.Completed));
+        Assert.That(p.PaidAt.HasValue, Is.True);
+    }
+}
+
+// ============================================
+// DELIVERY TESTS
+// ============================================
+[TestFixture]
+public class DeliveryTests
+{
+    [SetUp]
+    public void Setup()
+    {
+        Delivery.ClearExtentForTests();
+    }
+
+    [Test]
+    public void Delivery_AssociationWithOrder_SetsReverse()
+    {
+        var c = new Customer(1, "Ibrahim", "Yesil", "999999", "x@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var addr = new Adress("Street", "City", "12345");
+        var d = new Delivery(1, DeliveryMethod.Courier, addr, DateTime.Now, null, 5, DeliveryStatus.Scheduled, o);
+
+        Assert.That(o.Delivery, Is.EqualTo(d));
+    }
+
+    [Test]
+    public void InvalidAddress_Throws()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new Adress("", "City", "12345"));
+    }
+}
+
+// ============================================
+// MENUITEMS + MENU + INGREDIENT TESTS
+// ============================================
+[TestFixture]
+public class MenuItemsTests
+{
+    [SetUp]
+    public void Setup()
+    {
+        MenuItems.ClearExtentForTests();
+        Ingredient.ClearExtentForTests();
+        Menu.Menu.ClearExtentForTest();
+        Restaurant.ClearExtentForTest();
+        Order.ClearExtentForTests();
+        Customer.ClearExtentForTests();
+        Delivery.ClearExtentForTests();
+        Payment.ClearExtentForTests();
+    }
+
+    // -------------------- QUANTITY TESTS --------------------
+
+    [Test]
+    public void Quantity_AddsBothSides()
+    {
+        var c = new Customer(1, "Test", "User", "123456", "xx@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+        var item = new TestMenuItem("Burger", 25m, true);
+
+        var q = new Quantity(o, item, 2);
+
+        Assert.That(item.Quantities.Contains(q), Is.True);
+        Assert.That(o.Quantities.Contains(q), Is.True);
+    }
+
+    [Test]
+    public void Quantity_MustBePositive()
+    {
+        var c = new Customer(1, "A", "B", "123", "a@b.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+        var item = new TestMenuItem("Pizza", 30m, true);
+
+        Assert.Throws<ArgumentException>(() => new Quantity(o, item, 0));
+    }
+
+    [Test]
+    public void AddQuantity_DifferentMenuItem_Throws()
+    {
+        var c = new Customer(1, "X", "Y", "111", "a@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var item1 = new TestMenuItem("Item1", 10m, true);
+        var item2 = new TestMenuItem("Item2", 10m, true);
+
+        var q = new Quantity(o, item1, 1);
+
+        Assert.Throws<InvalidOperationException>(() => item2.AddQuantity(q));
+    }
+
+    [Test]
+    public void AddQuantity_Duplicate_Throws()
+    {
+        var c = new Customer(1, "T", "U", "222", "t@mail.com");
+        var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
+
+        var item = new TestMenuItem("Wrap", 15m, true);
+        var q = new Quantity(o, item, 1);
+
+        Assert.Throws<InvalidOperationException>(() => item.AddQuantity(q));
+    }
+
+    // -------------------- MENU RELATION TESTS --------------------
+
+    [Test]
+    public void AddMenu_CreatesReverseConnection()
+    {
+        var item = new TestMenuItem("Soup", 10m, true);
+        var rest = new Main.Classes.Restaurant.Restaurant(1, "Bella", "10-22");
+        var menu = new Menu.Menu(1, "Main Menu", "v1", true, rest);
+
+        item.AddMenu(menu);
+
+        Assert.That(item.Menus.Contains(menu), Is.True);
+        Assert.That(menu.Items.Contains(item), Is.True);
+    }
+
+    [Test]
+    public void AddMenu_Duplicate_Throws()
+    {
+        var item = new TestMenuItem("Soup", 10m, true);
+        var rest = new Main.Classes.Restaurant.Restaurant(1, "Bella", "10-22");
+        var menu = new Menu.Menu(1, "Main Menu", "v1", true, rest);
+
+        item.AddMenu(menu);
+
+        Assert.Throws<InvalidOperationException>(() => item.AddMenu(menu));
+    }
+
+    // -------------------- INGREDIENT RELATION TESTS --------------------
+
+    [Test]
+    public void AddIngredient_CreatesBidirectional()
+    {
+        var item = new TestMenuItem("Salad", 12m, true);
+        var ing = new Ingredient(1, "Tomato", Unit.Gram);
+
+        item.AddIngredient(ing);
+
+        Assert.That(item.Ingredients.Contains(ing), Is.True);
+        Assert.That(ing.MenuItems.Contains(item), Is.True);
+    }
+
+    [Test]
+    public void AddIngredient_Duplicate_Throws()
+    {
+        var item = new TestMenuItem("Salad", 12m, true);
+        var ing = new Ingredient(1, "Onion", Unit.Gram);
+
+        item.AddIngredient(ing);
+
+        Assert.Throws<InvalidOperationException>(() => item.AddIngredient(ing));
+    }
+
+    // -------------------- ATTRIBUTE VALIDATION --------------------
+
+    [Test]
+    public void InvalidName_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => new TestMenuItem("", 10m, true));
+        Assert.Throws<ArgumentException>(() => new TestMenuItem("A", 10m, true));
+        Assert.Throws<ArgumentException>(() => new TestMenuItem(new string('x', 60), 10m, true));
+    }
+
+    [Test]
+    public void InvalidPrice_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => new TestMenuItem("Tea", -1m, true));
+        Assert.Throws<ArgumentException>(() => new TestMenuItem("Tea", 1500m, true));
+    }
+
+    [Test]
+    public void InvalidDescription_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => new TestMenuItem("Tea", 10m, true, ""));
+    }
+}
+
+    
 }

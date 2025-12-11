@@ -1,5 +1,5 @@
+using Main.Classes.Orders;
 using Menu;
-namespace Main.Classes.Orders;
 
 public class Quantity
 {
@@ -20,12 +20,8 @@ public class Quantity
         Item = item;
         Amount = amount;
 
-        // Register with Order
-        if (!order.Quantities.Contains(this))
-            order.AddQuantity(this);
-
-        // Register with MenuItem
-        if (!item.Quantities.Contains(this))
-            item.AddQuantity(this);
+        // Sadece tek yönlü çağrı
+        order.AddQuantity(this);
+        item.AddQuantity(this);
     }
 }
