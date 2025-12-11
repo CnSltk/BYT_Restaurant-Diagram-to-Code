@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using Main.Classes.Orders;
  
 namespace Menu;
- 
+
 [Serializable]
 public abstract class MenuItems
 {
@@ -65,12 +65,7 @@ public abstract class MenuItems
         if (!_menus.Contains(menu))
             _menus.Add(menu);
     }
- 
-    internal void RemoveMenuInternal(Menu menu)
-    {
-        if (_menus.Contains(menu))
-            _menus.Remove(menu);
-    }
+    
  
     public void AddMenu(Menu menu)
     {
@@ -85,6 +80,46 @@ public abstract class MenuItems
         if (!menu.Items.Contains(this))
             menu.AddMenuItem(this);
     }
+    internal void RemoveMenuInternal(Menu menu)
+    {
+        if (_menus.Contains(menu))
+            _menus.Remove(menu);
+    }
+
+    public void RemoveMenu(Menu menu)
+    {
+        if (menu == null)
+            throw new ArgumentException("Menu cannot be null.");
+
+        if (!_menus.Contains(menu))
+            throw new InvalidOperationException("Menu not found in this MenuItem.");
+
+        _menus.Remove(menu);
+
+        
+        if (menu.Items.Contains(this))
+            menu.RemoveMenuItem(this);
+    }
+    internal void RemoveQuantityInternal(Quantity q)
+    {
+        if (_quantities.Contains(q))
+            _quantities.Remove(q);
+    }
+
+    public void RemoveQuantity(Quantity q)
+    {
+        if (q == null)
+            throw new ArgumentException("Quantity cannot be null.");
+
+        if (!_quantities.Contains(q))
+            throw new InvalidOperationException("Quantity not found in this MenuItem.");
+
+        _quantities.Remove(q);
+        
+        if (q.Order.Quantities.Contains(q))
+            q.Order.RemoveQuantity(q);
+    }
+
  
     // ============================
     // INGREDIENT AGGREGATION  (1..* —— 1..*)
@@ -112,6 +147,64 @@ public abstract class MenuItems
         if (!ing.MenuItems.Contains(this))
             ing.AddMenuItemInternal(this);
     }
+    internal void RemoveIngredientInternal(Ingredient ing)
+    {
+        if (_ingredients.Contains(ing))
+            _ingredients.Remove(ing);
+    }
+    
+
+    
+    // ============================
+    // REFLEX ASSOCIATION (MenuItem 1..* —— 1..* MenuItem)
+    // ============================
+
+    private List<MenuItems> _relatedItems = new();
+    public IReadOnlyList<MenuItems> RelatedItems => _relatedItems.AsReadOnly();
+
+    internal void AddRelatedItemInternal(MenuItems item)
+    {
+        if (!_relatedItems.Contains(item))
+            _relatedItems.Add(item);
+    }
+
+    public void AddRelatedItem(MenuItems item)
+    {
+        if (item == null)
+            throw new ArgumentException("Related menu item cannot be null.");
+
+        if (item == this)
+            throw new InvalidOperationException("Cannot relate a menu item to itself.");
+
+        if (_relatedItems.Contains(item))
+            throw new InvalidOperationException("Menu item already related.");
+
+        _relatedItems.Add(item);
+        
+        if (!item._relatedItems.Contains(this))
+            item.AddRelatedItemInternal(this);
+    }
+    
+    internal void RemoveRelatedItemInternal(MenuItems item)
+    {
+        if (_relatedItems.Contains(item))
+            _relatedItems.Remove(item);
+    }
+
+    public void RemoveRelatedItem(MenuItems item)
+    {
+        if (item == null)
+            throw new ArgumentException("Related menu item cannot be null.");
+
+        if (!_relatedItems.Contains(item))
+            throw new InvalidOperationException("Related item not found.");
+
+        _relatedItems.Remove(item);
+
+        if (item._relatedItems.Contains(this))
+            item.RemoveRelatedItemInternal(this);
+    }
+
  
     // ============================
     // ATTRIBUTES
