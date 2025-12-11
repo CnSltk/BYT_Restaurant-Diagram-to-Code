@@ -22,6 +22,5 @@ public class Quantity
 
         // Sadece tek yönlü çağrı
         order.AddQuantity(this);
-        item.AddQuantity(this);
     }
 }

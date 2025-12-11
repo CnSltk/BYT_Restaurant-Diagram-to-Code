@@ -465,7 +465,7 @@ public class MenuItemsTests
     [Test]
     public void Quantity_MustBePositive()
     {
-        var c = new Customer(1, "A", "B", "123", "a@b.com");
+        var c = new Customer(1, "Axd", "Basd", "1232222222", "a@b.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
         var item = new TestMenuItem("Pizza", 30m, true);
 
@@ -475,7 +475,7 @@ public class MenuItemsTests
     [Test]
     public void AddQuantity_DifferentMenuItem_Throws()
     {
-        var c = new Customer(1, "X", "Y", "111", "a@mail.com");
+        var c = new Customer(1, "Xsds", "Yasd", "111123123", "a@mail.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
         var item1 = new TestMenuItem("Item1", 10m, true);
@@ -489,7 +489,7 @@ public class MenuItemsTests
     [Test]
     public void AddQuantity_Duplicate_Throws()
     {
-        var c = new Customer(1, "T", "U", "222", "t@mail.com");
+        var c = new Customer(1, "Task", "Uasdasd", "222232222", "t@mail.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
         var item = new TestMenuItem("Wrap", 15m, true);
