@@ -141,7 +141,7 @@ public class MenuItems
     private List<Quantity> _quantities = new();
     public IReadOnlyList<Quantity> Quantities => _quantities.AsReadOnly();
 
-    internal void AddQuantityInternal(Quantity q)
+    public void AddQuantityInternal(Quantity q)
     {
         if (q == null) throw new ArgumentException("Quantity cannot be null.");
         if (!_quantities.Contains(q))
@@ -381,7 +381,6 @@ public class MenuItems
             throw new ArgumentException("BeverageCategory is required for Beverage items.");
     }
 
-    // Update methods (same as yours)
     public void UpdateBase(string? name = null, decimal? price = null, bool? isAvailable = null, string? description = null)
     {
         if (name is not null) Name = name;
