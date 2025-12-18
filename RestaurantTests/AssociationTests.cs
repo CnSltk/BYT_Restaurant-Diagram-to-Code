@@ -263,11 +263,6 @@ public class AssociationTests
         }
     }
     
-public class TestMenuItem : MenuItems
-{
-    public TestMenuItem(string name, decimal price, bool isAvailable, string? desc = null)
-        : base(name, price, isAvailable, desc) { }
-}
 
 // ============================================
 // CUSTOMER TESTS
@@ -356,7 +351,17 @@ public class OrderTests
         var c = new Customer(1, "A", "B", "111111", "a@a.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
-        var item = new TestMenuItem("Pizza", 20, true);
+        var item = MenuItems.CreateFood(
+            "Burger",
+            25m,
+            true,
+            spiceLevel: false,
+            isVegetarian: false,
+            calories: 700,
+            prepTimeMin: 15,
+            category: FoodCategory.MainCourse
+        );
+
         var q = new Quantity(o, item, 1);
 
         Assert.Throws<InvalidOperationException>(() => o.RemoveQuantity(q));
@@ -369,7 +374,17 @@ public class OrderTests
         var o1 = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
         var o2 = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
-        var item = new TestMenuItem("Soup", 10, true);
+        var item = MenuItems.CreateFood(
+            "Burger",
+            25m,
+            true,
+            spiceLevel: false,
+            isVegetarian: false,
+            calories: 700,
+            prepTimeMin: 15,
+            category: FoodCategory.MainCourse
+        );
+
 
         Assert.Throws<InvalidOperationException>(() => new Quantity(o2, item, 1));
     }
@@ -452,9 +467,19 @@ public class MenuItemsTests
     [Test]
     public void Quantity_AddsBothSides()
     {
-        var c = new Customer(1, "Test", "User", "123456", "xx@mail.com");
+        var c = new Customer(1, "Test", "User", "123456", "x@mail.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
-        var item = new TestMenuItem("Burger", 25m, true);
+
+        var item = MenuItems.CreateFood(
+            "Burger",
+            25m,
+            true,
+            false,
+            false,
+            700,
+            15,
+            FoodCategory.MainCourse
+        );
 
         var q = new Quantity(o, item, 2);
 
@@ -465,9 +490,19 @@ public class MenuItemsTests
     [Test]
     public void Quantity_MustBePositive()
     {
-        var c = new Customer(1, "Axd", "Basd", "1232222222", "a@b.com");
+        var c = new Customer(1, "A", "B", "123456", "a@a.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
-        var item = new TestMenuItem("Pizza", 30m, true);
+
+        var item = MenuItems.CreateFood(
+            "Pizza",
+            30m,
+            true,
+            false,
+            true,
+            800,
+            20,
+            FoodCategory.MainCourse
+        );
 
         Assert.Throws<ArgumentException>(() => new Quantity(o, item, 0));
     }
@@ -475,11 +510,30 @@ public class MenuItemsTests
     [Test]
     public void AddQuantity_DifferentMenuItem_Throws()
     {
-        var c = new Customer(1, "Xsds", "Yasd", "111123123", "a@mail.com");
+        var c = new Customer(1, "X", "Y", "111111", "x@mail.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
-        var item1 = new TestMenuItem("Item1", 10m, true);
-        var item2 = new TestMenuItem("Item2", 10m, true);
+        var item1 = MenuItems.CreateFood(
+            "Soup",
+            10m,
+            true,
+            false,
+            true,
+            300,
+            10,
+            FoodCategory.Starter
+        );
+
+        var item2 = MenuItems.CreateFood(
+            "Salad",
+            12m,
+            true,
+            false,
+            true,
+            200,
+            5,
+            FoodCategory.Starter
+        );
 
         var q = new Quantity(o, item1, 1);
 
@@ -489,14 +543,25 @@ public class MenuItemsTests
     [Test]
     public void AddQuantity_Duplicate_Throws()
     {
-        var c = new Customer(1, "Task", "Uasdasd", "222232222", "t@mail.com");
+        var c = new Customer(1, "Task", "User", "222222", "t@mail.com");
         var o = new Order(DateTime.Now, false, OrderStatus.Preparing, c);
 
-        var item = new TestMenuItem("Wrap", 15m, true);
+        var item = MenuItems.CreateFood(
+            "Wrap",
+            15m,
+            true,
+            false,
+            false,
+            600,
+            10,
+            FoodCategory.MainCourse
+        );
+
         var q = new Quantity(o, item, 1);
 
         Assert.Throws<InvalidOperationException>(() => item.AddQuantity(q));
     }
+}
 
     // -------------------- MENU RELATION TESTS --------------------
 

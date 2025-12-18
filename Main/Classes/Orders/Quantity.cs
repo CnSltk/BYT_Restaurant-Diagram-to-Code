@@ -20,7 +20,7 @@ public class Quantity
         Item = item;
         Amount = amount;
 
-        // Sadece tek yönlü çağrı
+        // TEK YÖNLÜ ÇAĞRI
         order.AddQuantity(this);
     }
 }

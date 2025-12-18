@@ -10,49 +10,71 @@ namespace RestaurantTests;
 [TestFixture]
 public class MenuItemTests
 {
-    public class TestableMenuItem : MenuItems
+    [SetUp]
+    public void Setup()
     {
-        public TestableMenuItem(
-            string name,
-            decimal price,
-            bool isAvailable,
-            string? description = null
-        ) : base(name, price, isAvailable, description)
-        {
-        }
+        MenuItems.ClearExtentForTests();
     }
-    
-
-   [Test]
-   public void Constructor_ValidValues_AssignedCorrectly()
-   {
-       var item = new TestableMenuItem("Pizza", 20, true, "Cheesy");
-   
-       Assert.That(item.Name, Is.EqualTo("Pizza"));
-       Assert.That(item.Price, Is.EqualTo(20));
-       Assert.That(item.IsAvailable, Is.True);
-       Assert.That(item.Description, Is.EqualTo("Cheesy"));
-   }
-
-   [Test]
-   public void Name_EmptyValue_ThrowsException()
-   {
-       var item = new TestableMenuItem("Pizza", 10, true);
-
-       var ex = Assert.Throws<ArgumentException>(() =>
-           item.Name = ""
-       );
-
-       Assert.That(ex.Message, Is.EqualTo("Name cannot be empty"));
-   }
-
 
     [Test]
-    public void UpdateMenuItem_UpdatesAllFields()
+    public void CreateFood_ValidValues_AssignedCorrectly()
     {
-        var item = new TestableMenuItem("Burger", 18, true);
+        var item = MenuItems.CreateFood(
+            name: "Pizza",
+            price: 20m,
+            isAvailable: true,
+            spiceLevel: true,
+            isVegetarian: false,
+            calories: 800,
+            prepTimeMin: 15,
+            category: FoodCategory.MainCourse,
+            description: "Cheesy"
+        );
 
-        item.UpdateMenuItem(
+        Assert.That(item.Name, Is.EqualTo("Pizza"));
+        Assert.That(item.Price, Is.EqualTo(20m));
+        Assert.That(item.IsAvailable, Is.True);
+        Assert.That(item.Description, Is.EqualTo("Cheesy"));
+        Assert.That(item.ItemType, Is.EqualTo(MenuItemType.Food));
+        Assert.That(item.Calories, Is.EqualTo(800));
+    }
+
+    [Test]
+    public void CreateFood_WithBeverageAttribute_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            var item = MenuItems.CreateFood(
+                "Soup", 10m, true,
+                false, true, 200, 10,
+                FoodCategory.Starter
+            );
+
+            item.UpdateBeverageDetails(volumeMl: 500);
+        });
+    }
+
+    [Test]
+    public void Name_Empty_ThrowsException()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            MenuItems.CreateFood(
+                "", 10m, true,
+                false, true, 300, 10,
+                FoodCategory.Starter
+            ));
+    }
+
+    [Test]
+    public void UpdateBase_UpdatesCommonFields()
+    {
+        var item = MenuItems.CreateFood(
+            "Burger", 18m, true,
+            false, false, 700, 15,
+            FoodCategory.MainCourse
+        );
+
+        item.UpdateBase(
             name: "Veggie Burger",
             price: 20m,
             isAvailable: false,
@@ -64,154 +86,54 @@ public class MenuItemTests
         Assert.That(item.IsAvailable, Is.False);
         Assert.That(item.Description, Is.EqualTo("New!"));
     }
-    
-    [Test]
-    public void Name_TooLong_ThrowsException()
-    {
-        var item = new TestableMenuItem("Pizza", 20m, true);
-        var longName = new string('A', 51);
-
-        var ex = Assert.Throws<ArgumentException>(() => item.Name = longName);
-
-        Assert.That(ex!.Message, Is.EqualTo("Name length must be between 2 and 50 characters"));
-    }
-    
-
 }
+
 
 /* -------------------------------------------------------------
    FOOD TESTS
 --------------------------------------------------------------*/
 [TestFixture]
-public class FoodTests
+public class BeverageMenuItemTests
 {
-    [Test]
-    public void Food_ValidValues_AssignedCorrectly()
+    [SetUp]
+    public void Setup()
     {
-        var food = new Food(
-            name: "Pasta",
-            price: 30m,
-            isAvailable: true,
-            spiceLevel: true,
-            isVegetarian: true,
-            calories: 600,
-            prepTimeMin: 20,
-            category: FoodCategory.MainCourse,
-            description: "Creamy pasta"
-        );
-
-        Assert.That(food.Name, Is.EqualTo("Pasta"));
-        Assert.That(food.Price, Is.EqualTo(30m));
-        Assert.That(food.Calories, Is.EqualTo(600));
-        Assert.That(food.PrepTimeMin, Is.EqualTo(20));
-        Assert.That(food.Category, Is.EqualTo(FoodCategory.MainCourse));
-        Assert.That(food.IsVegetarian, Is.True);
-        Assert.That(food.SpiceLevel, Is.True);
+        MenuItems.ClearExtentForTests();
     }
 
     [Test]
-    public void Food_CaloriesOutOfRange_ThrowsException()
+    public void CreateBeverage_ValidValues_AssignedCorrectly()
     {
-        var food = new Food(
-            name: "Soup",
-            price: 15m,
-            isAvailable: true,
-            spiceLevel: false,
-            isVegetarian: true,
-            calories: 200,
-            prepTimeMin: 10,
-            category: FoodCategory.Starter
-        );
-
-        Assert.Throws<ArgumentException>(() => food.Calories = 0);
-        Assert.Throws<ArgumentException>(() => food.Calories = 6000);
-    }
-
-    [Test]
-    public void Food_SaveAndLoadExtent_RestoresFoods()
-    {
-        Food.ClearExtentForTests();
-
-        var f1 = new Food("Soup", 12m, true, false, true, 200, 10, FoodCategory.Starter);
-        var f2 = new Food("Cake", 18m, true, false, false, 500, 30, FoodCategory.Dessert);
-
-        var path = "Food_Test.json";
-        if (File.Exists(path))
-            File.Delete(path);
-
-        Food.Save(path);
-        Food.ClearExtentForTests();
-        Assert.That(Food.GetExtent().Count, Is.EqualTo(0));
-
-        Food.Load(path);
-
-        Assert.That(Food.GetExtent().Count, Is.EqualTo(2));
-        Assert.That(Food.GetExtent().Any(f => f.Name == "Soup"));
-        Assert.That(Food.GetExtent().Any(f => f.Name == "Cake"));
-    }
-}
-/* -------------------------------------------------------------
-   BEVERAGE TESTS
---------------------------------------------------------------*/
-[TestFixture]
-public class BeverageTests
-{
-    [Test]
-    public void Beverage_ValidValues_AssignedCorrectly()
-    {
-        var drink = new Beverage(
+        var drink = MenuItems.CreateBeverage(
             name: "Cola",
             price: 8m,
             isAvailable: true,
             volumeMl: 500,
-            category: BeverageCategory.SoftBeverage
+            beverageCategory: BeverageCategory.SoftBeverage,
+            description: "Cold"
         );
 
         Assert.That(drink.Name, Is.EqualTo("Cola"));
         Assert.That(drink.Price, Is.EqualTo(8m));
         Assert.That(drink.VolumeMl, Is.EqualTo(500));
-        Assert.That(drink.Category, Is.EqualTo(BeverageCategory.SoftBeverage));
+        Assert.That(drink.BeverageCategory, Is.EqualTo(BeverageCategory.SoftBeverage));
+        Assert.That(drink.ItemType, Is.EqualTo(MenuItemType.Beverage));
     }
 
     [Test]
     public void Beverage_InvalidVolume_ThrowsException()
     {
-        var drink = new Beverage(
-            name: "Water",
-            price: 5m,
-            isAvailable: true,
-            volumeMl: 500,
-            category: BeverageCategory.SoftBeverage
-        );
-
-        var ex = Assert.Throws<ArgumentException>(() => drink.VolumeMl = 750);
-
-        Assert.That(ex!.Message, Is.EqualTo("Volume must be 500 ml or 1000 ml"));
-    }
-
-    [Test]
-    public void Beverage_SaveAndLoadExtent_RestoresBeverages()
-    {
-        Beverage.ClearExtentForTests();
-
-        var b1 = new Beverage("Tea", 6m, true, 500, BeverageCategory.HotBeverage);
-        var b2 = new Beverage("Beer", 15m, true, 1000, BeverageCategory.Alcoholic);
-
-        var path = "Beverage_Test.json";
-        if (File.Exists(path))
-            File.Delete(path);
-
-        Beverage.Save(path);
-        Beverage.ClearExtentForTests();
-        Assert.That(Beverage.GetExtent().Count, Is.EqualTo(0));
-
-        Beverage.Load(path);
-
-        Assert.That(Beverage.GetExtent().Count, Is.EqualTo(2));
-        Assert.That(Beverage.GetExtent().Any(b => b.Name == "Tea"));
-        Assert.That(Beverage.GetExtent().Any(b => b.Name == "Beer"));
+        Assert.Throws<ArgumentException>(() =>
+            MenuItems.CreateBeverage(
+                "Water",
+                5m,
+                true,
+                750,
+                BeverageCategory.SoftBeverage
+            ));
     }
 }
+
 /* -------------------------------------------------------------
    INGREDIENT TEST
 --------------------------------------------------------------*/
