@@ -138,17 +138,17 @@ public class MenuItems
     // ============================
     // QUANTITY ASSOCIATION (PASSIVE SIDE)
     // ============================
-    private List<Main.Classes.Orders.Quantity> _quantities = new();
-    public IReadOnlyList<Main.Classes.Orders.Quantity> Quantities => _quantities.AsReadOnly();
+    private List<Quantity> _quantities = new();
+    public IReadOnlyList<Quantity> Quantities => _quantities.AsReadOnly();
 
-    internal void AddQuantityInternal(Main.Classes.Orders.Quantity q)
+    internal void AddQuantityInternal(Quantity q)
     {
         if (q == null) throw new ArgumentException("Quantity cannot be null.");
         if (!_quantities.Contains(q))
             _quantities.Add(q);
     }
 
-    internal void RemoveQuantityInternal(Main.Classes.Orders.Quantity q)
+    internal void RemoveQuantityInternal(Quantity q)
     {
         if (q == null) throw new ArgumentException("Quantity cannot be null.");
         _quantities.Remove(q);
