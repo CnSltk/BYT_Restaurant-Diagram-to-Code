@@ -1,0 +1,74 @@
+﻿using System.Collections.ObjectModel;
+using System.Text.Json;
+
+namespace Main.Classes.Employees;
+
+public enum Shift
+{
+    Morning, Evening, Night
+}
+
+[Serializable]
+public class FullTime : Staff
+{
+    private static List<FullTime> _fullTimeExtent = new List<FullTime>();
+    
+    private static void AddToExtent(FullTime fullTime)
+    {
+        if (fullTime == null)
+            throw new ArgumentException("FullTime cannot be null.");
+        _fullTimeExtent.Add(fullTime);
+    }
+
+    public static IReadOnlyList<FullTime> GetExtent()
+    {
+        return _fullTimeExtent.AsReadOnly();
+    }
+    public Shift Shift { get; private set; }
+
+    public FullTime(int staffId,string firstName, string lastName, decimal salary, string department, Shift shift, StaffType staffType)
+        : base(staffId, firstName,  lastName, salary, department, staffType)
+    {
+        Shift = shift;
+    }
+
+    public void ShiftChange(Shift newShift)
+    {
+        Shift = newShift;
+    }
+
+    
+    
+    public static void Save(string path = "fullTimes.json")
+    {
+        try
+        {
+            string jsonString = JsonSerializer.Serialize(_fullTimeExtent, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(path, jsonString);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to save FullTime.", ex);
+        }
+    }
+
+    public static bool Load(string path = "fullTimes.json")
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                _fullTimeExtent.Clear();
+                return false;
+            }
+            string jsonString = File.ReadAllText(path);
+            _fullTimeExtent = JsonSerializer.Deserialize<List<FullTime>>(jsonString);
+            return true;
+        }
+        catch (Exception)
+        {
+            _fullTimeExtent.Clear();
+            return false;
+        }
+    }
+}
